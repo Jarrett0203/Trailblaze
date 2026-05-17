@@ -1,4 +1,4 @@
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Image, ScrollView, StyleSheet, Text, Pressable, View } from 'react-native'
 import React from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -20,12 +20,12 @@ const HomeScreen = () => {
             resizeMode="contain"
           />
           <View className="flex-row items-center space-x-3">
-            <TouchableOpacity className="p-2 bg-gray-100 rounded-full">
+            <Pressable className="p-2 bg-gray-100 rounded-full">
               <Text className="text-lg">🔍</Text>
-            </TouchableOpacity>
-            <TouchableOpacity className="bg-yellow-400 px-3 py-1 rounded-full">
+            </Pressable>
+            <Pressable className="bg-yellow-400 px-3 py-1 rounded-full">
               <Text className="text-sm font-semibold text-white">PRO</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
         
@@ -39,9 +39,9 @@ const HomeScreen = () => {
 
           <View className="absolute inset-0 flex items-center justify-center">
             <Text className="text-white text-4xl font-bold text-center px-6">Plan your next adventure</Text>
-            <TouchableOpacity className="bg-orange-500 px-6 py-2 rounded-full mt-4">
+            <Pressable className="bg-orange-500 px-6 py-2 rounded-full mt-4">
               <Text className='text-white font-semibold text-base'>Create new trip plan</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
 

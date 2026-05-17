@@ -1,4 +1,5 @@
 export type FeaturedGuide = {
+  id: string;
   place: string;
   description: string;
   image: string;
@@ -79,6 +80,7 @@ export const guides: Guide[] = [
 
 export const featuredGuides: FeaturedGuide[] = [
   {
+    id: '1',
     place: "Arashiyama, Kyoto",
     description:
       "Bamboo groves, temple trails and a river town wrapped in timeless calm.",
@@ -91,6 +93,7 @@ export const featuredGuides: FeaturedGuide[] = [
     },
   },
   {
+    id: '2',
     place: "Hakone, Kanagawa",
     description:
       "Soak in an onsen with Mount Fuji framed perfectly on the horizon.",
@@ -103,6 +106,7 @@ export const featuredGuides: FeaturedGuide[] = [
     },
   },
   {
+    id: '3',
     place: "Yakushima Island",
     description:
       "Ancient cedar forests, misty peaks and wild coastlines straight from a Miyazaki film.",

@@ -1,4 +1,4 @@
-import { ImageBackground, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { ImageBackground, ScrollView, StyleSheet, Text, Pressable, View } from 'react-native'
 import React from 'react'
 import { RouteProp } from '@react-navigation/native'
 import { GuideStackParamList } from '../navigation/GuideStack'
@@ -25,9 +25,9 @@ const GuideDetailScreen = (props: GuideDetailScreenProps) => {
     <SafeAreaView>
       <ScrollView>
         <ImageBackground className='w-full h-80' source={{uri: guide.image}}>
-          <TouchableOpacity className='absolute top-4 left-4 p-2 bg-white/80 rounded-full z-10' onPress={() => navigation.goBack()}>
+          <Pressable className='absolute top-4 left-4 p-2 bg-white/80 rounded-full z-10' onPress={() => navigation.goBack()}>
             <Ionicons name='arrow-back' size={24} color="#FF5722" />
-          </TouchableOpacity>
+          </Pressable>
 
           <View className="p-4 flex-1 justify-end">
             <Text className="text-white text-2xl font-bold">

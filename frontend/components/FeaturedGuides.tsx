@@ -10,8 +10,8 @@ const FeaturedGuides = () => {
         horizontal
         showsHorizontalScrollIndicator={false}
       >
-        {featuredGuides?.map((guide, index) => (
-          <View className="w-64 mr-4 rounded-2xl overflow-hidden bg-white shadow-lg">
+        {featuredGuides?.map((guide) => (
+          <View key={guide.id} className="w-64 mr-4 rounded-2xl overflow-hidden bg-white shadow-lg">
             <Image
               className="w-full h-40"
               resizeMode="cover"
