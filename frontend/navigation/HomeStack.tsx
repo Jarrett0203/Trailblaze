@@ -1,9 +1,8 @@
 import { StyleSheet, Text, View } from 'react-native'
 import React from 'react'
 import HomeScreen from '../screens/HomeScreen';
-import GuideScreen from '../screens/GuideScreen';
-import ProfileScreen from '../screens/ProfileScreen';
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import NewTripScreen from '../screens/NewTripScreen';
 
 
 export type HomeStackParamsList = {
@@ -15,9 +14,9 @@ export type HomeStackParamsList = {
 }
 
 export type TabNavigatorParamsList = {
-  Home: typeof HomeScreen
-  Guides: typeof GuideScreen
-  Profile: typeof ProfileScreen
+  Home: undefined
+  Guides: undefined
+  Profile: undefined
 }
 
 const HomeStack = () => {
@@ -26,6 +25,7 @@ const HomeStack = () => {
   return (
     <Stack.Navigator screenOptions={{headerShown: false}}>
       <Stack.Screen name='HomeMain' component={HomeScreen} />
+      <Stack.Screen name="NewTrip" component={NewTripScreen} />
     </Stack.Navigator>
   )
 }
