@@ -1,4 +1,4 @@
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { Modal, Pressable, StyleSheet, Text, TextStyle, View, ViewStyle } from "react-native";
 import React, { useState } from "react";
 import dayjs from "dayjs";
 import { useNavigation } from "@react-navigation/native";
@@ -6,22 +6,56 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Calendar, DateData } from "react-native-calendars";
 import { MarkingProps } from "react-native-calendars/src/calendar/day/marking";
+import GooglePlacesTextInput, { Place } from 'react-native-google-places-textinput';
 
 type DateRange = {
   startDate?: string;
   endDate?: string;
 };
 
+
+
 const NewTripScreen = () => {
   const [calendarVisible, setCalendarVisible] = useState(false);
   const [selectedRange, setSelectedRange] = useState<DateRange>({});
   const [displayStart, setDisplayStart] = useState("");
   const [displayEnd, setDisplayEnd] = useState("");
-  const [searchVisible, setSearchVisible] = useState("");
+  const [searchVisible, setSearchVisible] = useState(false);
   const [chosenLocation, setChosenLocation] = useState("");
   const [error, setError] = useState("");
   const navigation = useNavigation();
   const today = dayjs().format("YYYY-MM-DD");
+  // const [isFocused, setIsFocused] = useState(false);
+
+  const searchStyle: {
+  container: ViewStyle;
+  input: TextStyle; 
+  suggestionsContainer: ViewStyle;
+} = {
+  container: {
+    width: '100%',
+    maxWidth: 1200,
+    padding: 10,
+    marginTop: 0,
+    marginBottom: 0,
+    marginLeft: 'auto',
+    marginRight: 'auto',
+  },
+  input: {
+    flex: 1,
+    height: 44,
+    color: "#333",
+    fontSize: 16,
+    marginLeft: 5,
+    borderColor: 'transparent'
+  },
+  suggestionsContainer: {
+    marginTop: 10,
+    backgroundColor: "#fff",
+    maxHeight:'100%'
+  },
+};
+
 
   const getMarkedDates = () => {
     const marks: Record<string, MarkingProps> = {};
@@ -70,6 +104,11 @@ const NewTripScreen = () => {
     }
   };
 
+  const handlePlaceSelect = (place: Place) => {
+    setChosenLocation(place.structuredFormat.mainText.text);
+    setSearchVisible(false);
+  };
+
   const onSaveDates = () => {
     if (selectedRange.startDate) {
       setDisplayStart(selectedRange.startDate);
@@ -79,6 +118,9 @@ const NewTripScreen = () => {
     }
     setCalendarVisible(false);
   };
+
+  console.log("API key:", process.env.GOOGLE_API_KEY);
+
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -96,7 +138,10 @@ const NewTripScreen = () => {
           Build an itinerary and map out your upcoming travel plans
         </Text>
 
-        <Pressable className="border border-gray-30 rounded-xl px-4 py-3 mb-4">
+        <Pressable
+          onPress={() => setSearchVisible(true)}
+          className="border border-gray-30 rounded-xl px-4 py-3 mb-4"
+        >
           <Text className="text-sm font-semibold text-gray-700 mb-1">
             Where to?
           </Text>
@@ -116,7 +161,8 @@ const NewTripScreen = () => {
             <View className="flex-row items-center">
               <Ionicons name="calendar" color={"#000"} size={16} />
               <Text className="text-sm text-gray-500">
-                &nbsp;{displayStart
+                &nbsp;
+                {displayStart
                   ? dayjs(displayStart).format("MMM D")
                   : "Start Date"}
               </Text>
@@ -129,7 +175,8 @@ const NewTripScreen = () => {
             <View className="flex-row items-center">
               <Ionicons name="calendar" color={"#000"} size={16} />
               <Text className="text-sm text-gray-500">
-                &nbsp;{displayEnd ? dayjs(displayEnd).format("MMM D") : "End Date"}
+                &nbsp;
+                {displayEnd ? dayjs(displayEnd).format("MMM D") : "End Date"}
               </Text>
             </View>
           </View>
@@ -151,6 +198,10 @@ const NewTripScreen = () => {
         </View>
 
         {error && <Text className="text-red-500 text-sm mb-4">{error}</Text>}
+
+        <Pressable className="bg-orange-500 rounded-full py-3 items-center mb-4">
+          <Text className="text-white font-semibold text-base">Start Planning</Text>
+        </Pressable>
 
         <Text className="text-sm text-gray-500 text-center">
           Or see an example for{" "}
@@ -181,10 +232,34 @@ const NewTripScreen = () => {
           </View>
         </View>
       </Modal>
+
+
+      <Modal animationType="fade" visible={searchVisible}>
+        <SafeAreaView className="flex-1 bg-white pt-10 px-4">
+          <View className="flex-row items-center mb-4">
+            <Pressable className="mr-3">
+              <Ionicons name="arrow-back" size={24} color={"#000"} />
+            </Pressable>
+            <Text className="text-lg font-semibold text-gray-900">
+              Search for a place
+            </Text>
+          </View>
+          <GooglePlacesTextInput
+            apiKey={process.env.EXPO_PUBLIC_GOOGLE_API_KEY}
+            placeHolderText="Search for a place"
+            onPlaceSelect={handlePlaceSelect}
+            style={searchStyle}
+          />
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 };
 
 export default NewTripScreen;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  inputFocused: {
+    borderColor: 'transparent',
+  },
+});
