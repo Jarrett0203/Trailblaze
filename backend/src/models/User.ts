@@ -5,4 +5,4 @@ const userSchema = new mongoose.Schema({
   name: { type: String },
 });
 
-export default mongoose.model("User", userSchema);
+export const User = mongoose.model("User", userSchema);
