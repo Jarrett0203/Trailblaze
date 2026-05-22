@@ -1,19 +1,32 @@
-import { Modal, Pressable, StyleSheet, Text, TextStyle, View, ViewStyle } from "react-native";
+import {
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextStyle,
+  View,
+  ViewStyle,
+} from "react-native";
 import React, { useState } from "react";
+import axios from "axios";
 import dayjs from "dayjs";
 import { useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Calendar, DateData } from "react-native-calendars";
 import { MarkingProps } from "react-native-calendars/src/calendar/day/marking";
-import GooglePlacesTextInput, { Place } from 'react-native-google-places-textinput';
+import GooglePlacesTextInput, {
+  Place,
+} from "react-native-google-places-textinput";
+import { useUser } from "@clerk/expo";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { HomeStackParamsList } from "../navigation/HomeStack";
 
 type DateRange = {
   startDate?: string;
   endDate?: string;
 };
-
-
 
 const NewTripScreen = () => {
   const [calendarVisible, setCalendarVisible] = useState(false);
@@ -23,39 +36,41 @@ const NewTripScreen = () => {
   const [searchVisible, setSearchVisible] = useState(false);
   const [chosenLocation, setChosenLocation] = useState("");
   const [error, setError] = useState("");
-  const navigation = useNavigation();
+  const [isLoading, setIsLoading] = useState(false);
+  const { user: expoUser } = useUser();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<HomeStackParamsList>>();
   const today = dayjs().format("YYYY-MM-DD");
   // const [isFocused, setIsFocused] = useState(false);
 
   const searchStyle: {
-  container: ViewStyle;
-  input: TextStyle; 
-  suggestionsContainer: ViewStyle;
-} = {
-  container: {
-    width: '100%',
-    maxWidth: 1200,
-    padding: 10,
-    marginTop: 0,
-    marginBottom: 0,
-    marginLeft: 'auto',
-    marginRight: 'auto',
-  },
-  input: {
-    flex: 1,
-    height: 44,
-    color: "#333",
-    fontSize: 16,
-    marginLeft: 5,
-    borderColor: 'transparent'
-  },
-  suggestionsContainer: {
-    marginTop: 10,
-    backgroundColor: "#fff",
-    maxHeight:'100%'
-  },
-};
-
+    container: ViewStyle;
+    input: TextStyle;
+    suggestionsContainer: ViewStyle;
+  } = {
+    container: {
+      width: "100%",
+      maxWidth: 1200,
+      padding: 10,
+      marginTop: 0,
+      marginBottom: 0,
+      marginLeft: "auto",
+      marginRight: "auto",
+    },
+    input: {
+      flex: 1,
+      height: 44,
+      color: "#333",
+      fontSize: 16,
+      marginLeft: 5,
+      borderColor: "transparent",
+    },
+    suggestionsContainer: {
+      marginTop: 10,
+      backgroundColor: "#fff",
+      maxHeight: "100%",
+    },
+  };
 
   const getMarkedDates = () => {
     const marks: Record<string, MarkingProps> = {};
@@ -119,8 +134,70 @@ const NewTripScreen = () => {
     setCalendarVisible(false);
   };
 
-  console.log("API key:", process.env.GOOGLE_API_KEY);
+  const handleCreateTrip = async () => {
+    try {
+      setIsLoading(true);
+      setError("");
 
+      if (
+        !chosenLocation ||
+        !selectedRange.startDate ||
+        !selectedRange.endDate
+      ) {
+        setError("Please select a location and date range");
+        return;
+      }
+      const clerkUserId = expoUser?.id;
+      const email = expoUser?.primaryEmailAddress?.emailAddress;
+      if (!clerkUserId || !email) {
+        setError("User not authenticated or email missing");
+        return;
+      }
+
+      let background = "https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png";
+      try {
+        const photoRes = await axios.get(
+          `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/trips/place-photo`,
+          { params: { location: chosenLocation }}
+        ); 
+        console.log(photoRes);
+        if (photoRes.data.photoUrl) {
+          background = photoRes.data.photoUrl;
+        }
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          console.error("Google API error:", error.response?.data);
+        }
+        console.log("Could not fetch place photo, using placeholder", error);
+      }
+
+      const tripData = {
+        tripName: chosenLocation,
+        startDate: selectedRange.startDate,
+        endDate: selectedRange.endDate,
+        startDay: dayjs(selectedRange.startDate).format("dddd"),
+        endDay: dayjs(selectedRange.endDate).format("dddd"),
+        clerkUserId,
+        background,
+        userData: {
+          email,
+          name: expoUser?.fullName || "",
+        },
+      };
+
+      const response = await axios.post(
+        `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/trips`,
+        tripData,
+      );
+      const createdTrip = response.data.trip;
+      navigation.navigate("PlanTrip", { trip: createdTrip });
+    } catch (error) {
+      console.log("Error", error);
+      setError("Something went wrong creating your trip");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -197,10 +274,19 @@ const NewTripScreen = () => {
           </Pressable>
         </View>
 
-        {error && <Text className="text-red-500 text-sm mb-4">{error}</Text>}
+        {error && <Text className="text-red-500 text-sm mb-4 mx-auto">{error}</Text>}
 
-        <Pressable className="bg-orange-500 rounded-full py-3 items-center mb-4">
-          <Text className="text-white font-semibold text-base">Start Planning</Text>
+        <Pressable
+          onPress={handleCreateTrip}
+          className="bg-orange-500 rounded-full py-3 items-center mb-4"
+        >
+          {isLoading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text className="text-white font-semibold text-base">
+              Start Planning
+            </Text>
+          )}
         </Pressable>
 
         <Text className="text-sm text-gray-500 text-center">
@@ -233,7 +319,6 @@ const NewTripScreen = () => {
         </View>
       </Modal>
 
-
       <Modal animationType="fade" visible={searchVisible}>
         <SafeAreaView className="flex-1 bg-white pt-10 px-4">
           <View className="flex-row items-center mb-4">
@@ -260,6 +345,6 @@ export default NewTripScreen;
 
 const styles = StyleSheet.create({
   inputFocused: {
-    borderColor: 'transparent',
+    borderColor: "transparent",
   },
 });
