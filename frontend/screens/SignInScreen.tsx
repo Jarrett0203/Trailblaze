@@ -2,7 +2,7 @@ import { StyleSheet, Text, TextInput, Pressable, View } from "react-native";
 import React, { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../navigation/RootNavigator";
+import { RootStackParamsList } from "../navigation/RootNavigator";
 import OauthSignIn from "../components/OauthSignIn";
 import { useAuth, useClerk, useSignIn } from "@clerk/expo";
 
@@ -14,7 +14,7 @@ const SignInScreen = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+    useNavigation<NativeStackNavigationProp<RootStackParamsList>>();
 
   const onSignInPress = async () => {
     if (!isLoaded) return;
@@ -63,6 +63,7 @@ const SignInScreen = () => {
 
       <View style={styles.linkContainer}>
         <Text style={styles.linkText}>Don't have an account?</Text>
+        &nbsp;
         <Pressable onPress={() => navigation.navigate("SignUp")}>
           <Text style={[styles.linkText, { color: "#FF5722" }]}>Sign Up</Text>
         </Pressable>

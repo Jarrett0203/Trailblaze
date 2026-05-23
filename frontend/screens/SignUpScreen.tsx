@@ -2,7 +2,7 @@ import { StyleSheet, Text, TextInput, Pressable, View } from "react-native";
 import React, { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../navigation/RootNavigator";
+import { RootStackParamsList } from "../navigation/RootNavigator";
 import { useClerk, useSignUp } from "@clerk/expo";
 
 const SignUpScreen = () => {
@@ -10,52 +10,57 @@ const SignUpScreen = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const {signUp} = useSignUp();
+    useNavigation<NativeStackNavigationProp<RootStackParamsList>>();
+  const { signUp } = useSignUp();
   const [pendingVerification, setPendingVerification] = useState(false);
   const [emailCode, setEmailCode] = useState("");
-  const clerk = useClerk()
+  const clerk = useClerk();
 
   const onSignUpPress = async () => {
     const { error } = await signUp.password({
       emailAddress,
-      password
+      password,
     });
     if (error) {
-      const errJSON = JSON.stringify(error, null, 2)
+      const errJSON = JSON.stringify(error, null, 2);
       console.error(errJSON);
-      setError(error.message || "Sign up failed")
+      setError(error.message || "Sign up failed");
       return;
     }
-    setError('');
+    setError("");
     await signUp.verifications.sendEmailCode();
     setPendingVerification(true);
-  }
+  };
 
   const onVerifyPress = async () => {
     await signUp.verifications.verifyEmailCode({
       code: emailCode,
     });
-    if (signUp.status === 'complete') {
-      await clerk.setActive({session: signUp.createdSessionId});
-      setError('');
+    if (signUp.status === "complete") {
+      await clerk.setActive({ session: signUp.createdSessionId });
+      setError("");
     } else {
-      console.error('Sign-up attempt not complete:', signUp);
+      console.error("Sign-up attempt not complete:", signUp);
       setError("Sign up not complete");
     }
-  }
+  };
 
   if (pendingVerification) {
     return (
       <View style={styles.container}>
         <Text>Verify your email</Text>
-        <TextInput style={styles.input} value={emailCode} onChangeText={setEmailCode} placeholder="Enter your verification code"/>
-        {error !== '' && <Text style={styles.error}> {error} </Text>}
+        <TextInput
+          style={styles.input}
+          value={emailCode}
+          onChangeText={setEmailCode}
+          placeholder="Enter your verification code"
+        />
+        {error !== "" && <Text style={styles.error}> {error} </Text>}
         <Pressable style={styles.button} onPress={onVerifyPress}>
           <Text> Verify </Text>
         </Pressable>
       </View>
-    )
+    );
   }
 
   return (
@@ -76,7 +81,7 @@ const SignUpScreen = () => {
         value={password}
         style={styles.input}
       />
-      {error !== '' && <Text style={styles.error}> {error} </Text>}
+      {error !== "" && <Text style={styles.error}> {error} </Text>}
 
       <Pressable style={styles.button} onPress={onSignUpPress}>
         <Text style={styles.buttonText}>Continue</Text>
@@ -84,8 +89,9 @@ const SignUpScreen = () => {
 
       <View style={styles.linkContainer}>
         <Text style={styles.linkText}>Already have an account?</Text>
+        &nbsp;
         <Pressable onPress={() => navigation.goBack()}>
-          <Text style={[styles.linkText, { color: "#FF5722"}]}>Sign In</Text>
+          <Text style={[styles.linkText, { color: "#FF5722" }]}>Sign In</Text>
         </Pressable>
       </View>
     </View>
@@ -107,31 +113,32 @@ const styles = StyleSheet.create({
     padding: 12,
     marginVertical: 10,
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5
+    borderColor: "#ccc",
+    borderRadius: 5,
   },
   title: { fontSize: 24, fontWeight: "bold", marginBottom: 20 },
-  button: { backgroundColor: "#FF5722", 
+  button: {
+    backgroundColor: "#FF5722",
     padding: 12,
     borderRadius: 5,
     width: "100%",
     alignItems: "center",
-    marginTop: 10
+    marginTop: 10,
   },
   buttonText: {
     color: "#fff",
     fontSize: 16,
-    fontWeight: "bold"
+    fontWeight: "bold",
   },
   linkContainer: {
     flexDirection: "row",
-    marginTop: 20
+    marginTop: 20,
   },
   linkText: {
-    fontSize: 16
+    fontSize: 16,
   },
   error: {
     color: "red",
-    marginBottom: 10
-  }
+    marginBottom: 10,
+  },
 });

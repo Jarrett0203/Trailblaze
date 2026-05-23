@@ -6,14 +6,14 @@ import SignInScreen from '../screens/SignInScreen';
 import SignUpScreen from '../screens/SignUpScreen';
 import { useAuth } from '@clerk/expo';
 
-export type RootStackParamList = {
+export type RootStackParamsList = {
   Auth: undefined;
   SignIn: undefined;
   SignUp: undefined;
   Main: undefined;
 }
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
+const Stack = createNativeStackNavigator<RootStackParamsList>();
 
 const RootNavigator = () => {
   const {isLoaded, isSignedIn} = useAuth();

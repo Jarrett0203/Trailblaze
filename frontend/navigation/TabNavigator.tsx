@@ -4,7 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import HomeStack from './HomeStack';
 import { Ionicons } from '@expo/vector-icons';
 import GuideStack from './GuideStack';
-import ProfileScreen from '../screens/ProfileScreen';
+import ProfileStack from './ProfileStack';
 
 const TabNavigator = () => {
   const Tab = createBottomTabNavigator();
@@ -29,7 +29,7 @@ const TabNavigator = () => {
           <Ionicons name="book" color={color} size={size} />
         )
       }} />
-      <Tab.Screen name="Profile" component={ProfileScreen} options={{
+      <Tab.Screen name="Profile" component={ProfileStack} options={{
         tabBarIcon: ({color, size}) => (
           <Ionicons name="person" color={color} size={size} />
         )

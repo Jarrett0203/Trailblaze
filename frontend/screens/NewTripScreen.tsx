@@ -21,6 +21,7 @@ import GooglePlacesTextInput, {
 } from "react-native-google-places-textinput";
 import { useUser } from "@clerk/expo";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { tripBackground } from "../types/Trip";
 import { HomeStackParamsList } from "../navigation/HomeStack";
 
 type DateRange = {
@@ -154,12 +155,12 @@ const NewTripScreen = () => {
         return;
       }
 
-      let background = "https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png";
+      let background = tripBackground;
       try {
         const photoRes = await axios.get(
           `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/trips/place-photo`,
-          { params: { location: chosenLocation }}
-        ); 
+          { params: { location: chosenLocation } },
+        );
         console.log(photoRes);
         if (photoRes.data.photoUrl) {
           background = photoRes.data.photoUrl;
@@ -274,7 +275,9 @@ const NewTripScreen = () => {
           </Pressable>
         </View>
 
-        {error && <Text className="text-red-500 text-sm mb-4 mx-auto">{error}</Text>}
+        {error && (
+          <Text className="text-red-500 text-sm mb-4 mx-auto">{error}</Text>
+        )}
 
         <Pressable
           onPress={handleCreateTrip}
@@ -322,7 +325,7 @@ const NewTripScreen = () => {
       <Modal animationType="fade" visible={searchVisible}>
         <SafeAreaView className="flex-1 bg-white pt-10 px-4">
           <View className="flex-row items-center mb-4">
-            <Pressable className="mr-3">
+            <Pressable onPress={() => setSearchVisible(false)} className="mr-3">
               <Ionicons name="arrow-back" size={24} color={"#000"} />
             </Pressable>
             <Text className="text-lg font-semibold text-gray-900">
