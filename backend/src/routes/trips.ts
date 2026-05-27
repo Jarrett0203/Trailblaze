@@ -62,7 +62,7 @@ router.post("/", async (req: Request, res: Response) => {
     });
 
     await trip.save();
-    res.status(201).json({ message: "Trip created successfully!" });
+    res.status(201).json({ message: "Trip created successfully!", trip });
   } catch (error) {
     console.error("Error", error);
     res.status(500).json({ error: "Failed to create trip" });

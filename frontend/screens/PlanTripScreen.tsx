@@ -17,6 +17,8 @@ import { useUser } from "@clerk/expo";
 import dayjs from "dayjs";
 import { placeholderProfileImageUrl } from "./ProfileScreen";
 import Accordion from "../components/Accordion";
+import { PlanTripStackParamsList } from "../navigation/PlanTripStack";
+import { ProfileStackParamsList } from "../navigation/ProfileStack";
 
 type ModalMode = "place" | "expense" | "editExpense" | "ai";
 
@@ -64,8 +66,8 @@ const labels: { label: string; icon: IoniconsGlyphs }[] = [
 
 const PlanTripScreen = () => {
   const navigation =
-    useNavigation<NativeStackNavigationProp<HomeStackParamsList>>();
-  const route = useRoute<RouteProp<HomeStackParamsList, "PlanTrip">>();
+    useNavigation<NativeStackNavigationProp<PlanTripStackParamsList>>();
+  const route = useRoute<RouteProp<HomeStackParamsList|ProfileStackParamsList, "PlanTrip">>();
   const { trip: initialTrip } = route.params;
   const [trip, setTrip] = useState(initialTrip);
   const [selectedTab, setSelectedTab] = useState("Overview");
@@ -81,7 +83,7 @@ const PlanTripScreen = () => {
       <View className="relative w-full h-48">
         <Image
           className="h-full w-full"
-          source={{ uri: trip.background || tripBackground }}
+          source={{ uri: trip?.background || tripBackground }}
         />
         <Pressable className="absolute bottom-[-32px] left-4 right-4 bg-white p-4 rounded-xl shadow-md flex-row justify-between items-center">
           <Ionicons name="arrow-back" color="#000" size={28} />
@@ -89,11 +91,11 @@ const PlanTripScreen = () => {
         <View className="absolute bottom-[-32px] left-4 right-4 bg-white p-4 rounded-xl shadow-md flex-row justify-between items-center">
           <View>
             <Text className="text-lg font-semibold">
-              Trip to {trip.tripName || "Unnamed Trip"}
+              Trip to {trip?.tripName || "Unnamed Trip"}
             </Text>
             <Text className="text-sm text-gray-500 mt-1">
-              {trip.startDate ? dayjs(trip.startDate).format("MMM D") : "N/A"} -&nbsp;
-              {trip.endDate ? dayjs(trip.endDate).format("MMM D") : "N/A"}
+              {trip?.startDate ? dayjs(trip?.startDate).format("MMM D") : "N/A"} -&nbsp;
+              {trip?.endDate ? dayjs(trip?.endDate).format("MMM D") : "N/A"}
             </Text>
           </View>
           <View className="items-center">
@@ -184,7 +186,7 @@ const PlanTripScreen = () => {
                 // (trip?.placesToVisit || []).map((place: string) => renderPlaceCard(place))
               }
               {
-                (trip?.placesToVisit || trip.placesToVisit.length === 0) && (
+                (trip?.placesToVisit || trip?.placesToVisit.length === 0) && (
                   <Text className="text-gray-500 text-sm">No places added yet</Text>
                 )
               }
@@ -198,7 +200,7 @@ const PlanTripScreen = () => {
         </ScrollView>
       )}
       <View className="absolute right-4 bottom-20 space-y-3 items-end">
-        <Pressable className="w-12 h-12 rounded-full bg-gradient-to-tr from-pink-400 to bg-purple-600 items-center justify-center shadow">
+        <Pressable onPress={() => navigation.navigate("AIChat", {tripName: trip?.tripName})} className="w-12 h-12 rounded-full bg-gradient-to-tr from-pink-400 to bg-purple-600 items-center justify-center shadow">
           <MaterialIcons name="auto-awesome" size={24} color={'#fff'} />
         </Pressable>
         <Pressable className="w-12 h-12 rounded-full bg-gradient-to-tr bg-black items-center justify-center shadow mt-2">

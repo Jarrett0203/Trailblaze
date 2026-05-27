@@ -22,8 +22,8 @@ export type Trip = {
   placesToVisit: string[];
   itinerary: any[];
   expense: any[];
-  createdAt: string;
-  __v: number;
+  createdAt?: string;
+  __v?: number;
 };
 
 export type FormattedTrip = {

@@ -21,7 +21,7 @@ import GooglePlacesTextInput, {
 } from "react-native-google-places-textinput";
 import { useUser } from "@clerk/expo";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { tripBackground } from "../types/Trip";
+import { Trip, tripBackground } from "../types/Trip";
 import { HomeStackParamsList } from "../navigation/HomeStack";
 
 type DateRange = {
@@ -140,12 +140,12 @@ const NewTripScreen = () => {
       setIsLoading(true);
       setError("");
 
-      if (
-        !chosenLocation ||
-        !selectedRange.startDate ||
-        !selectedRange.endDate
-      ) {
-        setError("Please select a location and date range");
+      if (!chosenLocation) {
+        setError("Please select a location");
+        return;
+      }
+      if (!selectedRange.startDate || !selectedRange.endDate) {
+        setError("Please select a valid date range");
         return;
       }
       const clerkUserId = expoUser?.id;
@@ -161,7 +161,6 @@ const NewTripScreen = () => {
           `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/trips/place-photo`,
           { params: { location: chosenLocation } },
         );
-        console.log(photoRes);
         if (photoRes.data.photoUrl) {
           background = photoRes.data.photoUrl;
         }
@@ -190,7 +189,7 @@ const NewTripScreen = () => {
         `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/trips`,
         tripData,
       );
-      const createdTrip = response.data.trip;
+      const createdTrip: Trip = response.data.trip;
       navigation.navigate("PlanTrip", { trip: createdTrip });
     } catch (error) {
       console.log("Error", error);
@@ -234,7 +233,7 @@ const NewTripScreen = () => {
         >
           <View className="flex-1 mr-2">
             <Text className="text-sm font-semibold text-gray-700 mb-1">
-              Dates (optional)
+              Dates
             </Text>
             <View className="flex-row items-center">
               <Ionicons name="calendar" color={"#000"} size={16} />
