@@ -17,7 +17,7 @@ import axios from "axios";
 import dayjs from "dayjs";
 import { ProfileStackParamsList } from "../navigation/ProfileStack";
 
-const placeholderProfileImageUrl =
+export const placeholderProfileImageUrl =
   "https://cdn-icons-png.flaticon.com/128/3177/3177440.png";
 
 const ProfileScreen = () => {
