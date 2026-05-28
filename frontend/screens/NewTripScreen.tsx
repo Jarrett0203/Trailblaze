@@ -332,7 +332,7 @@ const NewTripScreen = () => {
             </Text>
           </View>
           <GooglePlacesTextInput
-            apiKey={process.env.EXPO_PUBLIC_GOOGLE_API_KEY}
+            apiKey={process.env.EXPO_PUBLIC_GOOGLE_API_KEY!}
             placeHolderText="Search for a place"
             onPlaceSelect={handlePlaceSelect}
             style={searchStyle}

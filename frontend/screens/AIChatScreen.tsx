@@ -1,5 +1,6 @@
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -16,6 +17,8 @@ import { PlanTripStackParamsList } from "../navigation/PlanTripStack";
 import { useUser } from "@clerk/expo";
 import { Ionicons } from "@expo/vector-icons";
 import { GoogleGenAI } from "@google/genai";
+import axios, { AxiosError } from "axios";
+import { crossPlatformAlert } from "../common/CrossPlatformAlert";
 
 type ChatMessage = {
   from: "user" | "ai";
@@ -82,12 +85,50 @@ const AIChatScreen = () => {
     }
   }
 
-  async function sendEmail(mesage: string) {}
+  async function sendEmail(message: string) {
+    const email = expoUser?.primaryEmailAddress?.emailAddress;
+    if (!email) {
+      crossPlatformAlert("Error", "User email not found.");
+      return;
+    }
+
+      crossPlatformAlert(
+        "Send to Email",
+        `Do you want to send this response to ${email}?`,
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Send", onPress: () => onPressSend(email, message) },
+        ],
+        () => onPressSend(email, message)
+      );
+  }
+
+  async function onPressSend(email: string, message: string) {
+    try {
+      const response = await axios.post(
+        `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/email`,
+        {
+          email,
+          subject: `Travel Assistant Response for ${location}`,
+          message,
+        },
+      );
+      crossPlatformAlert("Success", response.data.message);
+    } catch (error) {
+      console.error("Error sending email:", error);
+      if (error instanceof AxiosError) {
+        crossPlatformAlert(
+          "Email error",
+          error.response?.data.error || "Failed to send email",
+        );
+      }
+    }
+  }
 
   return (
     <View className="flex-1 bg-white pt-14 px-4">
       <View className="flex-row items-center mb-4">
-        <Pressable>
+        <Pressable onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" color={"#000"} size={24} />
         </Pressable>
         <Text className="ml-4 text-lg font-semibold">AI Assistant</Text>
@@ -128,8 +169,8 @@ const AIChatScreen = () => {
       </View>
 
       <ScrollView>
-        {messages.map((msg) => (
-          <View key={msg.text} className="mb-3">
+        {messages.map((msg, index) => (
+          <View key={index} className="mb-3">
             <View
               className={`p-3 rounded-lg ${msg.from === "user" ? "bg-gray-100 self-end" : "bg-orange-50 self-start"}`}
             >
