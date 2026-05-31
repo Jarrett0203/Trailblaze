@@ -9,29 +9,27 @@ export const placeSchema = new mongoose.Schema({
   reviews: [
     {
       authorName: String,
-      rating: String,
+      rating: Number,
       text: String
     }
   ],
   types: [String],
-  formatted_address: {
+  formattedAddress: {
     type: String, required: true
   },
   briefDescription: { type: String },
-  geometry: {
-    location: {
+  location: {
+    lat: { type: Number, required: true },
+    lng: { type: Number, required: true },
+  },
+  viewport: {
+    low: {
       lat: { type: Number, required: true },
-      lng: { type: Number, required: true },
+      lng: { type: Number, required: true }
     },
-    viewport: {
-      northeast: {
-        lat: { type: Number, required: true },
-        lng: { type: Number, required: true }
-      },
-      southwest: {
-        lat: { type: Number, required: true },
-        lng: { type: Number, required: true }
-      }
+    high: {
+      lat: { type: Number, required: true },
+      lng: { type: Number, required: true }
     }
   }
 })

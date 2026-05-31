@@ -129,12 +129,38 @@ router.get("/place-photo", async (req: Request, res: Response) => {
 
     res.json({ photoUrl });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({ error: "Failed to fetch photo" });
   }
 });
 
-router.get("/:tripId/places", async (req: Request, res: Response) => {
+router.get("/:tripId", async (req: Request, res: Response) => {
+  const { tripId } = req.params;
+  const clerkUserId = req.query.clerkUserId?.toString();
+
+  if (!clerkUserId) {
+    return res.status(401).json({ error: "User id is required!" });
+  }
+
+  try {
+    const user = await User.findOne({ clerkUserId });
+    if (!user) {
+      return res.status(404).json({ error: "User not found!"});
+    }
+
+    const trip = await Trip.findById(tripId).populate("host travelers");
+    if (!trip) {
+      return res.status(404).json({ error: "Trip not found!"});
+    }
+
+    res.status(200).json({trip});
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to fetch trips" });
+  }
+});
+
+router.post("/:tripId/places", async (req: Request, res: Response) => {
   const { tripId } = req.params;
   const { placeId } = req.body;
   if (!placeId) {
@@ -159,17 +185,17 @@ router.get("/:tripId/places", async (req: Request, res: Response) => {
       },
     );
 
-    const { status, result: details } = placeDetailsRes.data;
+    const details = placeDetailsRes.data;
 
-    if (status !== "OK" || !details) {
-      return res.status(400).json({ error: "Google Places API error" });
+    if (!details) {
+      return res.status(400).json({ error: "Failed to fetch place details!" });
     }
 
     const placeData = {
       name: details.displayName?.text || "Undefined place",
       phoneNumber: details.internationalPhoneNumber || "",
       website: details.websiteUri,
-      openingHours: details.currentOpeningHours || [],
+      openingHours: details.currentOpeningHours?.weekdayDescriptions || [],
       photos: (details.photos || []).map(
         (photo: Photo) =>
           `https://places.googleapis.com/v1/${photo.name}/media?maxWidthPx=800&key=${process.env.GOOGLE_API_KEY}`,
@@ -177,12 +203,12 @@ router.get("/:tripId/places", async (req: Request, res: Response) => {
       reviews: (details.reviews || []).map((review: Review) => ({
         authorName: review.authorAttribution?.displayName || "Unknown",
         rating: review.rating || 0,
-        text: review.text || "",
+        text: review.text?.text || "",
       })),
       types: details.types || [],
       formattedAddress: details.formattedAddress || "No address available",
       briefDescription:
-        details.editorialSummary.text.slice(0, 200) + "..." ||
+        details.editorialSummary?.text.slice(0, 200) + "..." ||
         details.reviews?.[0].text.slice(0, 200) + "..." ||
         `Located in ${details.addressComponents?.[2]?.longText || details.formattedAddress || "this area"}. A nice place to visit.`,
       location: details.location || { latitude: 0, longitude: 0 },

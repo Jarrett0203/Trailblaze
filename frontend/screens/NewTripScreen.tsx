@@ -4,9 +4,7 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  TextStyle,
   View,
-  ViewStyle,
 } from "react-native";
 import React, { useState } from "react";
 import axios from "axios";
@@ -23,6 +21,7 @@ import { useUser } from "@clerk/expo";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Trip, tripBackground } from "../types/Trip";
 import { HomeStackParamsList } from "../navigation/HomeStack";
+import { GoogleSearchStyle } from "../common/GoogleSearchStyle";
 
 type DateRange = {
   startDate?: string;
@@ -43,35 +42,6 @@ const NewTripScreen = () => {
     useNavigation<NativeStackNavigationProp<HomeStackParamsList>>();
   const today = dayjs().format("YYYY-MM-DD");
   // const [isFocused, setIsFocused] = useState(false);
-
-  const searchStyle: {
-    container: ViewStyle;
-    input: TextStyle;
-    suggestionsContainer: ViewStyle;
-  } = {
-    container: {
-      width: "100%",
-      maxWidth: 1200,
-      padding: 10,
-      marginTop: 0,
-      marginBottom: 0,
-      marginLeft: "auto",
-      marginRight: "auto",
-    },
-    input: {
-      flex: 1,
-      height: 44,
-      color: "#333",
-      fontSize: 16,
-      marginLeft: 5,
-      borderColor: "transparent",
-    },
-    suggestionsContainer: {
-      marginTop: 10,
-      backgroundColor: "#fff",
-      maxHeight: "100%",
-    },
-  };
 
   const getMarkedDates = () => {
     const marks: Record<string, MarkingProps> = {};
@@ -332,10 +302,11 @@ const NewTripScreen = () => {
             </Text>
           </View>
           <GooglePlacesTextInput
-            apiKey={process.env.EXPO_PUBLIC_GOOGLE_API_KEY!}
+            apiKey=""
+            proxyUrl={`${process.env.EXPO_PUBLIC_BACKEND_URL}/api/places/autocomplete`}
             placeHolderText="Search for a place"
             onPlaceSelect={handlePlaceSelect}
-            style={searchStyle}
+            style={GoogleSearchStyle}
           />
         </SafeAreaView>
       </Modal>

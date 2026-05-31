@@ -1,3 +1,5 @@
+import { PlaceToVisit } from "./PlaceToVisit";
+
 export const tripBackground = "https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png";
 
 export type Traveler = {
@@ -19,7 +21,7 @@ export type Trip = {
   host: Traveler;
   travelers: Traveler[];
   budget: number;
-  placesToVisit: string[];
+  placesToVisit: PlaceToVisit[];
   itinerary: any[];
   expense: any[];
   createdAt?: string;

@@ -6,19 +6,33 @@ import {
   Text,
   View,
 } from "react-native";
-import React, { useState } from "react";
-import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
+import React, { useCallback, useState } from "react";
+import {
+  RouteProp,
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { HomeStackParamsList } from "../navigation/HomeStack";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { tripBackground } from "../types/Trip";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import { useUser } from "@clerk/expo";
+import { useAuth, useUser } from "@clerk/expo";
 import dayjs from "dayjs";
 import { placeholderProfileImageUrl } from "./ProfileScreen";
 import Accordion from "../components/Accordion";
 import { PlanTripStackParamsList } from "../navigation/PlanTripStack";
 import { ProfileStackParamsList } from "../navigation/ProfileStack";
+import Modal from "react-native-modal";
+import GooglePlacesTextInput, {
+  Place,
+} from "react-native-google-places-textinput";
+import { GoogleSearchStyle } from "../common/GoogleSearchStyle";
+import { Photo } from "../types/Photo";
+import { Review } from "../types/Review";
+import axios, { AxiosError } from "axios";
+import { PlaceToVisit } from "../types/PlaceToVisit";
 
 type ModalMode = "place" | "expense" | "editExpense" | "ai";
 
@@ -67,7 +81,10 @@ const labels: { label: string; icon: IoniconsGlyphs }[] = [
 const PlanTripScreen = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<PlanTripStackParamsList>>();
-  const route = useRoute<RouteProp<HomeStackParamsList|ProfileStackParamsList, "PlanTrip">>();
+  const route =
+    useRoute<
+      RouteProp<HomeStackParamsList | ProfileStackParamsList, "PlanTrip">
+    >();
   const { trip: initialTrip } = route.params;
   const [trip, setTrip] = useState(initialTrip);
   const [selectedTab, setSelectedTab] = useState("Overview");
@@ -77,6 +94,121 @@ const PlanTripScreen = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [error, setError] = useState("");
   const { user: expoUser } = useUser();
+  const { getToken } = useAuth();
+
+  const handlePlaceToItinerary = async (placeData, selectedDate) => {};
+
+  const fetchTrips = useCallback(async () => {
+    const clerkUserId = expoUser?.id;
+    if (!clerkUserId || !trip._id) {
+      setError("User or trip id is missing!");
+      return;
+    }
+
+    try {
+      const token = await getToken();
+      const response = await axios.get(
+        `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/trips/${trip._id}`,
+        {
+          params: { clerkUserId },
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      setTrip(response.data.trip);
+      setError("");
+    } catch (error) {
+      console.error("Fetch trips error", error);
+    }
+  }, [trip._id, expoUser]);
+
+  const handleAddPlace = async (placeId: string) => {
+    if (!placeId || !trip._id) {
+      setError("Place id and trip id are required!");
+      return;
+    }
+
+    console.log("add place", placeId);
+
+    try {
+      const token = await getToken();
+      await axios.post(
+        `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/trips/${trip._id}/places`,
+        { placeId },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      await fetchTrips();
+      setModalVisible(false);
+      setSelectedDate(null);
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        console.error("Add place error:", error.response?.data.error);
+        setError(error.response?.data.error);
+      }
+    }
+  };
+
+  const handlePlaceSelect = async (place: Place) => {
+    console.log("Selected place:", place);
+    const placeId = place.placeId;
+    const details = place.details;
+    console.log(details);
+
+    if (!details) {
+      throw new Error("Could not retrieve place details!");
+    }
+
+    const placeData = {
+      name: details.displayName?.text || "Undefined place",
+      phoneNumber: details.internationalPhoneNumber || "",
+      website: details.websiteUri,
+      openingHours: details.currentOpeningHours?.weekdayDescriptions || [],
+      photos: (details.photos || []).map(
+        (photo: Photo) =>
+          `${process.env.EXPO_PUBLIC_BACKEND_URL}?photoName=${encodeURIComponent(photo.name)}&maxWidthPx=800`,
+      ),
+      reviews: (details.reviews || []).map((review: Review) => ({
+        authorName: review.authorAttribution?.displayName || "Unknown",
+        rating: review.rating || 0,
+        text: review.text?.text || "",
+      })),
+      types: details.types || [],
+      formattedAddress: details.formattedAddress || "No address available",
+      briefDescription:
+        details.editorialSummary?.text.slice(0, 200) + "..." ||
+        details.reviews?.[0].text.slice(0, 200) + "..." ||
+        `Located in ${details.addressComponents?.[2]?.longText || details.formattedAddress || "this area"}. A nice place to visit.`,
+      location: details.location || { latitude: 0, longitude: 0 },
+      viewport: details.viewport || {
+        low: { latitude: 0, longitude: 0 },
+        high: { latitude: 0, longitude: 0 },
+      },
+    };
+
+    if (selectedDate) {
+      await handlePlaceToItinerary(placeData, selectedDate);
+    } else {
+      await handleAddPlace(placeId);
+    }
+  };
+
+  const handlePlaceError = (error: any) => {
+    console.error("Google Places API Error", error);
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchTrips();
+    }, [fetchTrips]),
+  );
+
+  function renderPlaceCard(place: PlaceToVisit) {
+    console.log(place);
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -94,7 +226,8 @@ const PlanTripScreen = () => {
               Trip to {trip?.tripName || "Unnamed Trip"}
             </Text>
             <Text className="text-sm text-gray-500 mt-1">
-              {trip?.startDate ? dayjs(trip?.startDate).format("MMM D") : "N/A"} -&nbsp;
+              {trip?.startDate ? dayjs(trip?.startDate).format("MMM D") : "N/A"}{" "}
+              -&nbsp;
               {trip?.endDate ? dayjs(trip?.endDate).format("MMM D") : "N/A"}
             </Text>
           </View>
@@ -182,34 +315,97 @@ const PlanTripScreen = () => {
             header="Places to Visit"
             description={
               <>
-              {
-                // (trip?.placesToVisit || []).map((place: string) => renderPlaceCard(place))
-              }
-              {
-                (trip?.placesToVisit || trip?.placesToVisit.length === 0) && (
-                  <Text className="text-gray-500 text-sm">No places added yet</Text>
-                )
-              }
+                {
+                  (trip?.placesToVisit || []).map((place: PlaceToVisit) => renderPlaceCard(place))
+                }
+                {(trip?.placesToVisit || trip?.placesToVisit.length === 0) && (
+                  <Text className="text-gray-500 text-sm">
+                    No places added yet
+                  </Text>
+                )}
 
-              <Pressable className="border border-gray-300 rounded-lg px-4 py-2 mt-2">
-                <Text className="text-sm text-gray-500">Add a place</Text>
-              </Pressable>
+                <Pressable
+                  onPress={() => {
+                    setSelectedDate(null);
+                    setModalMode("place");
+                    setModalVisible(true);
+                  }}
+                  className="border border-gray-300 rounded-lg px-4 py-2 mt-2"
+                >
+                  <Text className="text-sm text-gray-500">Add a place</Text>
+                </Pressable>
               </>
             }
           />
         </ScrollView>
       )}
       <View className="absolute right-4 bottom-20 space-y-3 items-end">
-        <Pressable onPress={() => navigation.navigate("AIChat", {tripName: trip?.tripName})} className="w-12 h-12 rounded-full bg-gradient-to-tr from-pink-400 to bg-purple-600 items-center justify-center shadow">
-          <MaterialIcons name="auto-awesome" size={24} color={'#fff'} />
+        <Pressable
+          onPress={() =>
+            navigation.navigate("AIChat", { tripName: trip?.tripName })
+          }
+          className="w-12 h-12 rounded-full bg-gradient-to-tr from-pink-400 to bg-purple-600 items-center justify-center shadow"
+        >
+          <MaterialIcons name="auto-awesome" size={24} color={"#fff"} />
         </Pressable>
         <Pressable className="w-12 h-12 rounded-full bg-gradient-to-tr bg-black items-center justify-center shadow mt-2">
-          <Ionicons name="map" size={24} color={'#fff'} />
+          <Ionicons name="map" size={24} color={"#fff"} />
         </Pressable>
         <Pressable className="w-12 h-12 rounded-full bg-gradient-to-tr bg-black items-center justify-center shadow mt-2">
-          <Ionicons name="add" size={24} color={'#fff'} />
+          <Ionicons name="add" size={24} color={"#fff"} />
         </Pressable>
       </View>
+
+      {/* replace with react-native modal */}
+      <Modal
+        isVisible={modalVisible}
+        onBackdropPress={() => {
+          setModalVisible(false);
+          setSelectedDate(null);
+          setModalMode("place");
+        }}
+        style={{ justifyContent: "flex-end", margin: 0 }}
+      >
+        {modalMode === "place" || modalMode === "ai"} ? (
+        <View className="bg-white p-4 rounded-t-2xl h-[60%]">
+          {modalMode === "place" && selectedTab !== "Itinerary" && (
+            <>
+              <Text className="text-lg font-semibold mb-4">
+                {selectedDate
+                  ? `Add place to ${dayjs(selectedDate).format("ddd D/M")}`
+                  : "Search for a place"}
+              </Text>
+              <GooglePlacesTextInput
+                apiKey=""
+                proxyUrl={`${process.env.EXPO_PUBLIC_BACKEND_URL}/api/places/autocomplete`}
+                placeHolderText="Search for a place"
+                languageCode="en"
+                onPlaceSelect={handlePlaceSelect}
+                onError={handlePlaceError}
+                style={GoogleSearchStyle}
+                fetchDetails={true}
+                detailsFields={[
+                  "id",
+                  "displayName",
+                  "internationalPhoneNumber",
+                  "websiteUri",
+                  "currentOpeningHours",
+                  "photos",
+                  "reviews",
+                  "types",
+                  "formattedAddress",
+                  "editorialSummary",
+                  "addressComponents",
+                  "location",
+                  "viewport",
+                ]}
+                detailsProxyUrl={`${process.env.EXPO_PUBLIC_BACKEND_URL}/api/places/details`}
+              />
+            </>
+          )}
+        </View>
+        )
+      </Modal>
     </SafeAreaView>
   );
 };
