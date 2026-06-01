@@ -33,6 +33,9 @@ import { Photo } from "../types/Photo";
 import { Review } from "../types/Review";
 import axios, { AxiosError } from "axios";
 import { PlaceToVisit } from "../types/PlaceToVisit";
+import PlaceToVisitCard from "../components/PlaceToVisitCard";
+import { IoniconsGlyphs } from "../types/IoniconGlyphs";
+import { truncate } from "../common/String";
 
 type ModalMode = "place" | "expense" | "editExpense" | "ai";
 
@@ -67,7 +70,7 @@ const cards = [
   },
 ];
 
-type IoniconsGlyphs = keyof typeof Ionicons.glyphMap;
+
 
 const labels: { label: string; icon: IoniconsGlyphs }[] = [
   { label: "Flight", icon: "airplane" },
@@ -90,13 +93,15 @@ const PlanTripScreen = () => {
   const [selectedTab, setSelectedTab] = useState("Overview");
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMode, setModalMode] = useState<ModalMode>("place");
-  const [activePlace, setActivePlace] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
   const [error, setError] = useState("");
   const { user: expoUser } = useUser();
   const { getToken } = useAuth();
 
-  const handlePlaceToItinerary = async (placeData, selectedDate) => {};
+  const handlePlaceToItinerary = async (
+    placeData: PlaceToVisit,
+    selectedDate,
+  ) => {};
 
   const fetchTrips = useCallback(async () => {
     const clerkUserId = expoUser?.id;
@@ -179,9 +184,8 @@ const PlanTripScreen = () => {
       types: details.types || [],
       formattedAddress: details.formattedAddress || "No address available",
       briefDescription:
-        details.editorialSummary?.text.slice(0, 200) + "..." ||
-        details.reviews?.[0].text.slice(0, 200) + "..." ||
-        `Located in ${details.addressComponents?.[2]?.longText || details.formattedAddress || "this area"}. A nice place to visit.`,
+        truncate(details.editorialSummary?.text) ||
+        `Located in ${details.addressComponents?.[2]?.longText || details.formattedAddress || "this area"}.`,
       location: details.location || { latitude: 0, longitude: 0 },
       viewport: details.viewport || {
         low: { latitude: 0, longitude: 0 },
@@ -205,10 +209,6 @@ const PlanTripScreen = () => {
       fetchTrips();
     }, [fetchTrips]),
   );
-
-  function renderPlaceCard(place: PlaceToVisit) {
-    console.log(place);
-  }
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -315,9 +315,9 @@ const PlanTripScreen = () => {
             header="Places to Visit"
             description={
               <>
-                {
-                  (trip?.placesToVisit || []).map((place: PlaceToVisit) => renderPlaceCard(place))
-                }
+                {(trip?.placesToVisit || []).map((place: PlaceToVisit) =>
+                  <PlaceToVisitCard place={place} />,
+                )}
                 {(trip?.placesToVisit || trip?.placesToVisit.length === 0) && (
                   <Text className="text-gray-500 text-sm">
                     No places added yet

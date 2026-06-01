@@ -1,3 +1,4 @@
+import { truncate } from './../common/string';
 import { Photo } from "./../types/Photo";
 import { Router, Request, Response } from "express";
 import Trip from "../models/Trip";
@@ -208,9 +209,8 @@ router.post("/:tripId/places", async (req: Request, res: Response) => {
       types: details.types || [],
       formattedAddress: details.formattedAddress || "No address available",
       briefDescription:
-        details.editorialSummary?.text.slice(0, 200) + "..." ||
-        details.reviews?.[0].text.slice(0, 200) + "..." ||
-        `Located in ${details.addressComponents?.[2]?.longText || details.formattedAddress || "this area"}. A nice place to visit.`,
+        truncate(details.editorialSummary?.text) ||
+        `Located in ${details.addressComponents?.[2]?.longText || details.formattedAddress || "this area"}.`,
       location: details.location || { latitude: 0, longitude: 0 },
       viewport: details.viewport || {
         low: { latitude: 0, longitude: 0 },
