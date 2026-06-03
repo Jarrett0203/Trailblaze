@@ -6,11 +6,12 @@ import { HomeStackParamsList } from "./HomeStack";
 import PlanTripScreen from "../screens/PlanTripScreen";
 import AIChatScreen from "../screens/AIChatScreen";
 import MapScreen from "../screens/MapScreen";
+import { PlaceToVisit } from "../types/PlaceToVisit";
 
 export type PlanTripStackParamsList = {
   PlanTripMain: { trip: Trip };
   AIChat: { tripName: string };
-  MapScreen: undefined;
+  MapScreen: {places: PlaceToVisit[]};
 };
 
 const Stack = createNativeStackNavigator<PlanTripStackParamsList>();

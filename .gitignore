@@ -39,4 +39,6 @@ frontend/*.tsbuildinfo
 
 # generated native folders
 frontend/ios
-frontend//android
+frontend/android
+
+.idea

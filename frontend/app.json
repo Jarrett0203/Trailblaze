@@ -20,6 +20,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "package": "com.jarrett0203.trailblaze",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },

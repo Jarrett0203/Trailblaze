@@ -348,7 +348,7 @@ const PlanTripScreen = () => {
         >
           <MaterialIcons name="auto-awesome" size={24} color={"#fff"} />
         </Pressable>
-        <Pressable className="w-12 h-12 rounded-full bg-gradient-to-tr bg-black items-center justify-center shadow mt-2">
+        <Pressable onPress={() => navigation.navigate("MapScreen", {places: trip.placesToVisit || []})} className="w-12 h-12 rounded-full bg-gradient-to-tr bg-black items-center justify-center shadow mt-2">
           <Ionicons name="map" size={24} color={"#fff"} />
         </Pressable>
         <Pressable className="w-12 h-12 rounded-full bg-gradient-to-tr bg-black items-center justify-center shadow mt-2">
