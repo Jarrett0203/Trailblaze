@@ -316,7 +316,7 @@ const PlanTripScreen = () => {
             description={
               <>
                 {(trip?.placesToVisit || []).map((place: PlaceToVisit) =>
-                  <PlaceToVisitCard place={place} />,
+                  <PlaceToVisitCard key={place.name} place={place} />,
                 )}
                 {(trip?.placesToVisit || trip?.placesToVisit.length === 0) && (
                   <Text className="text-gray-500 text-sm">

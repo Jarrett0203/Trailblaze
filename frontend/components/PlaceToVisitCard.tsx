@@ -83,8 +83,10 @@ const PlaceToVisitCard = (props: PlaceToVisitCardProps) => {
             {place.briefDescription || "No description available"}
           </Text>
           <View className="flex-row items-center mt-1">
-            {renderStars(avgRating)}&nbsp;
-            <Text className="text-xs text-gray-500 mt-1">{avgRating}/5</Text>
+            {renderStars(avgRating)}
+            <Text className="text-xs text-gray-500 mt-1 ml-1">
+              {avgRating}/5
+            </Text>
           </View>
         </View>
       </Pressable>

@@ -1,5 +1,3 @@
-import 'react-native-url-polyfill/auto';
-import "./global.css";
 import { StyleSheet } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import React from "react";

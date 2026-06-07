@@ -69,6 +69,7 @@ const ProfileScreen = () => {
         } catch (error) {
           console.error("Error fetching trips", error);
           if (axios.isAxiosError(error)) {
+            console.error(error.stack);
             setError(error.response?.data.error || "Failed to fetch trips");
           }
         }
@@ -108,7 +109,7 @@ const ProfileScreen = () => {
           <Text className="mt-3 text-lg font-semibold">{name}</Text>
           <Text className="text-gray-500">{handle}</Text>
           <Text className="text-gray-500 text-sm mt-1">{email}</Text>
-          <View className="flex-row justify-center mt-4 space-x-12">
+          <View className="flex-row justify-center mt-4 gap-x-12">
             <View className="items-center">
               <Text className="font-bold text-base">0</Text>
               <Text className="text-xs text-gray-500 tracking-wide">
