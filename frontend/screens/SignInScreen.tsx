@@ -1,10 +1,11 @@
-import { StyleSheet, Text, TextInput, Pressable, View } from "react-native";
+import { StyleSheet, Text, TextInput, Pressable, View, Button, Linking, Platform } from "react-native";
 import React, { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamsList } from "../navigation/RootNavigator";
 import OauthSignIn from "../components/OauthSignIn";
 import { useAuth, useClerk, useSignIn } from "@clerk/expo";
+import { GoogleSignInButton } from "../components/GoogleSignIn";
 
 const SignInScreen = () => {
   const { setActive } = useClerk();
@@ -62,14 +63,14 @@ const SignInScreen = () => {
       </Pressable>
 
       <View style={styles.linkContainer}>
-        <Text style={styles.linkText}>Don't have an account?</Text>
-        &nbsp;
+        <Text style={styles.linkText}>Don't have an account?&nbsp;</Text>
         <Pressable onPress={() => navigation.navigate("SignUp")}>
-          <Text style={[styles.linkText, { color: "#FF5722" }]}>Sign Up</Text>
+          <Text style={[styles.linkText, { color: "#FF5722" }]}> Sign Up</Text>
         </Pressable>
       </View>
 
-      <OauthSignIn />
+      {/* <OauthSignIn /> */}
+      {Platform.OS === 'web' ? <OauthSignIn /> : <GoogleSignInButton />}
     </View>
   );
 };

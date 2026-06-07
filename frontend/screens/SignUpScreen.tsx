@@ -88,8 +88,7 @@ const SignUpScreen = () => {
       </Pressable>
 
       <View style={styles.linkContainer}>
-        <Text style={styles.linkText}>Already have an account?</Text>
-        &nbsp;
+        <Text style={styles.linkText}>Already have an account?&nbsp;</Text>
         <Pressable onPress={() => navigation.goBack()}>
           <Text style={[styles.linkText, { color: "#FF5722" }]}>Sign In</Text>
         </Pressable>

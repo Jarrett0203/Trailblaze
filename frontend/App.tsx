@@ -1,35 +1,41 @@
+import 'react-native-url-polyfill/auto';
+import "./global.css";
 import { StyleSheet } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
-import "./global.css";
 import React from "react";
 import RootNavigator from "./navigation/RootNavigator";
-import { tokenCache } from '@clerk/expo/token-cache'
 import { ClerkProvider } from '@clerk/expo'
 import * as SecureStore from "expo-secure-store";
+import { maybeCompleteAuthSession } from "expo-web-browser";
+
+maybeCompleteAuthSession();
+
+const tokenCache = {
+  async getToken(key: string) {
+    try {
+      const value = await SecureStore.getItemAsync(key);
+      return value;
+    } catch {
+      return null;
+    }
+  },
+  async saveToken(key: string, value: string) {
+    try {
+      await SecureStore.setItemAsync(key, value);
+    } catch (err) {
+      console.error('saveToken error:', err);
+    }
+  },
+};
 
 export default function App() {
+
   const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!
 
   if (!publishableKey) {
     throw new Error('Add your Clerk Publishable Key to the .env file')
   }
 
-  const tokenCache = {
-    async getToken(key: string) {
-      try {
-        return await SecureStore.getItemAsync(key);
-      } catch (err) {
-        return null;
-      }
-    },
-    async saveToken(key:string, value:string) {
-      try {
-        return await SecureStore.setItemAsync(key, value);
-      } catch (err) {
-        return;
-      }
-    }
-  }
 
   return (
     <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
