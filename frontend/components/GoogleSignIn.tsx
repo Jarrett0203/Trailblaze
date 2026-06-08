@@ -1,15 +1,16 @@
-import { useClerk } from "@clerk/expo";
 import { useSignInWithGoogle } from "@clerk/expo/google";
+import { useState } from "react";
 import {
+  ActivityIndicator,
+  Image,
   Platform,
-  StyleSheet,
+  Pressable,
   Text,
-  TouchableOpacity,
 } from "react-native";
 
 export function GoogleSignInButton() {
   const { startGoogleAuthenticationFlow } = useSignInWithGoogle();
-  const clerk = useClerk();
+  const [isLoading, setIsLoading] = useState(false);
 
   // Only render on iOS and Android
   if (Platform.OS !== "ios" && Platform.OS !== "android") {
@@ -18,6 +19,7 @@ export function GoogleSignInButton() {
 
   const handleGoogleSignIn = async () => {
     try {
+      setIsLoading(true);
       const { createdSessionId, setActive, signIn, signUp } =
         await startGoogleAuthenticationFlow({});
 
@@ -40,46 +42,29 @@ export function GoogleSignInButton() {
     } catch (err: any) {
       console.error("error message:", err?.message);
       console.error("error code:", err?.code);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <>
-      <TouchableOpacity
-        style={styles.googleButton}
-        onPress={handleGoogleSignIn}
-      >
-        <Text style={styles.googleButtonText}>Sign in with Google</Text>
-      </TouchableOpacity>
-    </>
+    <Pressable
+      onPress={handleGoogleSignIn}
+      className="w-full border border-gray-300 py-3 mt-3 rounded-lg flex-row justify-center items-center"
+    >
+      {isLoading ? (
+        <ActivityIndicator color="#FF5722" />
+      ) : (
+        <>
+          <Image
+            source={{ uri: "https://www.google.com/favicon.ico" }}
+            className="w-5 h-5 mr-2"
+          />
+          <Text className="text-gray-900 text-base font-semibold">
+            Sign In with Google
+          </Text>
+        </>
+      )}
+    </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  googleButton: {
-    backgroundColor: "#4285F4",
-    padding: 15,
-    borderRadius: 8,
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  googleButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  divider: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 20,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#ccc",
-  },
-  dividerText: {
-    marginHorizontal: 10,
-    color: "#666",
-  },
-});
