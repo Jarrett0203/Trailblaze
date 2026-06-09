@@ -19,8 +19,8 @@ const MapScreen = () => {
   return (
     <View className='flex-1'>
       <MapView ref={mapRef} style={{flex: 1, height: "100%"}} initialRegion={{
-        latitude: places[0].location.lat ?? 35.652832,
-        longitude: places[0].location.lng ?? 139.839478,
+        latitude: places[0].location.latitude ?? 35.652832,
+        longitude: places[0].location.longitude ?? 139.839478,
         latitudeDelta: 1,
         longitudeDelta: 1
       }}>
@@ -28,8 +28,8 @@ const MapScreen = () => {
           <Marker
             key={index}
             coordinate={{
-              latitude: place.location.lat,
-              longitude: place.location.lng,
+              latitude: place.location.latitude,
+              longitude: place.location.longitude,
             }}
           >
             <View style={{

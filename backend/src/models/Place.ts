@@ -19,17 +19,17 @@ export const placeSchema = new mongoose.Schema({
   },
   briefDescription: { type: String },
   location: {
-    lat: { type: Number, required: true },
-    lng: { type: Number, required: true },
+    latitude: { type: Number, required: true },
+    longitude: { type: Number, required: true },
   },
   viewport: {
     low: {
-      lat: { type: Number, required: true },
-      lng: { type: Number, required: true }
+      latitude: { type: Number, required: true },
+      longitude: { type: Number, required: true }
     },
     high: {
-      lat: { type: Number, required: true },
-      lng: { type: Number, required: true }
+      latitude: { type: Number, required: true },
+      longitude: { type: Number, required: true }
     }
   }
 })

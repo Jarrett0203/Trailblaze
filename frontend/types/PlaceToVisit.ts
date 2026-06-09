@@ -15,17 +15,17 @@ export type PlaceToVisit = {
   formattedAddress: string,
   briefDescription?: string,
   location: {
-    lat: number,
-    lng: number,
+    latitude: number,
+    longitude: number,
   },
   viewport: {
     low: {
-      lat: number,
-      lng: number
+      latitude: number,
+      longitude: number
     },
     high: {
-      lat: number,
-      lng: number
+      latitude: number,
+      longitude: number
     }
   }
 }

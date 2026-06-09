@@ -1,0 +1,51 @@
+import { ExpoConfig, ConfigContext } from "expo/config";
+
+export default ({ config }: ConfigContext): ExpoConfig => ({
+  ...config,
+  name: "trailblaze",
+  slug: "trailblaze",
+  version: "1.0.0",
+  orientation: "portrait",
+  icon: "./assets/icon.png",
+  userInterfaceStyle: "light",
+  newArchEnabled: true,
+  splash: {
+    image: "./assets/splash-icon.png",
+    resizeMode: "contain",
+    backgroundColor: "#ffffff",
+  },
+  scheme: "trailblaze",
+  ios: {
+    supportsTablet: true,
+  },
+  android: {
+    adaptiveIcon: {
+      foregroundImage: "./assets/adaptive-icon.png",
+      backgroundColor: "#ffffff",
+    },
+    package: "com.jarrett0203.trailblaze",
+    edgeToEdgeEnabled: true,
+    predictiveBackGestureEnabled: false,
+    config: {
+      googleMaps: {
+        apiKey: process.env.EXPO_PUBLIC_GOOGLE_API_KEY,
+      },
+    },
+  },
+  web: {
+    favicon: "./assets/favicon.png",
+    bundler: "metro",
+  },
+  plugins: [
+    "@clerk/expo",
+    "expo-secure-store",
+    "expo-web-browser",
+    "@react-native-google-signin/google-signin",
+  ],
+  extra: {
+    EXPO_PUBLIC_CLERK_GOOGLE_WEB_CLIENT_ID:
+      process.env.EXPO_PUBLIC_CLERK_GOOGLE_WEB_CLIENT_ID,
+    EXPO_PUBLIC_CLERK_GOOGLE_ANDROID_CLIENT_ID:
+      process.env.EXPO_PUBLIC_CLERK_GOOGLE_ANDROID_CLIENT_ID,
+  },
+});
