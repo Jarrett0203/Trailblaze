@@ -133,8 +133,6 @@ const PlanTripScreen = () => {
       return;
     }
 
-    console.log("add place", placeId);
-
     try {
       const token = await getToken();
       await axios.post(
@@ -158,10 +156,8 @@ const PlanTripScreen = () => {
   };
 
   const handlePlaceSelect = async (place: Place) => {
-    console.log("Selected place:", place);
     const placeId = place.placeId;
     const details = place.details;
-    console.log(details);
 
     if (!details) {
       throw new Error("Could not retrieve place details!");
@@ -356,7 +352,6 @@ const PlanTripScreen = () => {
         </Pressable>
       </View>
 
-      {/* replace with react-native modal */}
       <Modal
         isVisible={modalVisible}
         onBackdropPress={() => {
@@ -366,7 +361,7 @@ const PlanTripScreen = () => {
         }}
         style={{ justifyContent: "flex-end", margin: 0 }}
       >
-        {modalMode === "place" || modalMode === "ai"} ? (
+        {(modalMode === "place" || modalMode === "ai") && (
         <View className="bg-white p-4 rounded-t-2xl h-[60%]">
           {modalMode === "place" && selectedTab !== "Itinerary" && (
             <>
@@ -404,7 +399,7 @@ const PlanTripScreen = () => {
             </>
           )}
         </View>
-        )
+        )}
       </Modal>
     </SafeAreaView>
   );
