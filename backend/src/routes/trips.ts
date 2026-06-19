@@ -161,6 +161,49 @@ router.get("/:tripId", async (req: Request, res: Response) => {
   }
 });
 
+async function fetchPlaceDetails(placeId: string) {
+  const res = await axios.get(
+    `https://places.googleapis.com/v1/places/${placeId}`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": process.env.GOOGLE_API_KEY,
+        "X-Goog-FieldMask":
+          "id,displayName,internationalPhoneNumber,websiteUri,currentOpeningHours,photos,reviews,types,formattedAddress,editorialSummary,addressComponents,location,viewport",
+      },
+    },
+  );
+
+  const details = res.data;
+  if (!details) throw new Error("Failed to fetch place details");
+
+  return {
+    name: details.displayName?.text || "Unknown place",
+    phoneNumber: details.internationalPhoneNumber || "",
+    website: details.websiteUri,
+    openingHours: details.currentOpeningHours?.weekdayDescriptions || [],
+    photos: (details.photos || []).map(
+      (photo: Photo) =>
+        `https://places.googleapis.com/v1/${photo.name}/media?maxWidthPx=800&key=${process.env.GOOGLE_API_KEY}`,
+    ),
+    reviews: (details.reviews || []).map((review: Review) => ({
+      authorName: review.authorAttribution?.displayName || "Unknown",
+      rating: review.rating || 0,
+      text: review.text?.text || "",
+    })),
+    types: details.types || [],
+    formattedAddress: details.formattedAddress || "No address available",
+    briefDescription:
+      truncate(details.editorialSummary?.text) ||
+      `Located in ${details.addressComponents?.[2]?.longText || details.formattedAddress || "this area"}.`,
+    location: details.location || { latitude: 0, longitude: 0 },
+    viewport: details.viewport || {
+      low: { latitude: 0, longitude: 0 },
+      high: { latitude: 0, longitude: 0 },
+    },
+  };
+}
+
 router.post("/:tripId/places", async (req: Request, res: Response) => {
   const { tripId } = req.params;
   const { placeId } = req.body;
@@ -174,49 +217,7 @@ router.post("/:tripId/places", async (req: Request, res: Response) => {
   }
 
   try {
-    const placeDetailsRes = await axios.get(
-      `https://places.googleapis.com/v1/places/${placeId}`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "X-Goog-Api-Key": process.env.GOOGLE_API_KEY,
-          "X-Goog-FieldMask":
-            "id,displayName,internationalPhoneNumber,websiteUri,currentOpeningHours,photos,reviews,types,formattedAddress,editorialSummary,addressComponents,location,viewport",
-        },
-      },
-    );
-
-    const details = placeDetailsRes.data;
-
-    if (!details) {
-      return res.status(400).json({ error: "Failed to fetch place details!" });
-    }
-
-    const placeData = {
-      name: details.displayName?.text || "Undefined place",
-      phoneNumber: details.internationalPhoneNumber || "",
-      website: details.websiteUri,
-      openingHours: details.currentOpeningHours?.weekdayDescriptions || [],
-      photos: (details.photos || []).map(
-        (photo: Photo) =>
-          `https://places.googleapis.com/v1/${photo.name}/media?maxWidthPx=800&key=${process.env.GOOGLE_API_KEY}`,
-      ),
-      reviews: (details.reviews || []).map((review: Review) => ({
-        authorName: review.authorAttribution?.displayName || "Unknown",
-        rating: review.rating || 0,
-        text: review.text?.text || "",
-      })),
-      types: details.types || [],
-      formattedAddress: details.formattedAddress || "No address available",
-      briefDescription:
-        truncate(details.editorialSummary?.text) ||
-        `Located in ${details.addressComponents?.[2]?.longText || details.formattedAddress || "this area"}.`,
-      location: details.location || { latitude: 0, longitude: 0 },
-      viewport: details.viewport || {
-        low: { latitude: 0, longitude: 0 },
-        high: { latitude: 0, longitude: 0 },
-      },
-    };
+    const placeData = await fetchPlaceDetails(placeId);
 
     const updatedTrip = await Trip.findByIdAndUpdate(
       tripId,
@@ -232,5 +233,50 @@ router.post("/:tripId/places", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to add place to trip!" });
   }
 });
+
+router.post("/:tripId/itinerary", async (req:Request, res:Response) => {
+  try {
+    const { tripId } = req.params;
+    const { placeId, date, placeData } = req.body;
+
+    if (!date) {
+      return res.status(400).json({ error: "Date is required!"});
+    }
+    if (!placeId && !placeData) {
+      return res.status(400).json({ error: "placeId and placeData are missing!"});
+    }
+
+    const trip = await Trip.findById(tripId);
+    if (!trip) {
+      return res.status(400).json({ error: "Trip not found!"});
+    }
+
+    const activityData = {
+      date,
+      ...(placeData ?? await fetchPlaceDetails(placeId))
+    }
+
+    const existingItinerary = trip.itinerary.find(item => item.date == date);
+    let updatedTrip;
+    if (existingItinerary) {
+      updatedTrip = await Trip.findByIdAndUpdate(
+        tripId,
+        { $push: { "itinerary.$[elem].activities": activityData}},
+        { arrayFilters: [{ "elem.date": date}], new: true}
+      )
+    } else {
+      updatedTrip = await Trip.findByIdAndUpdate(
+        tripId,
+        { $push: { itinerary: {date, activities: [activityData]}}},
+        { new: true }
+      )
+    }
+
+    res.status(200).json({message: "Activity added to itinerary successfully", trip: updatedTrip});
+  } catch (error) {
+    console.error("Error adding itinerary", error);
+    res.status(500).json({ error: "Failed to add activity to itinerary!"});
+  }
+})
 
 export default router;
