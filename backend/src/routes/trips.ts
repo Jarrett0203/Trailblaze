@@ -5,6 +5,7 @@ import Trip from "../models/Trip";
 import { User } from "../models/User";
 import axios from "axios";
 import { Review } from "../types/Review";
+import { fetchPlaceDetails } from './places';
 
 const router = Router();
 
@@ -101,39 +102,7 @@ router.get("/", async (req: Request, res: Response) => {
   }
 });
 
-router.get("/place-photo", async (req: Request, res: Response) => {
-  const { location } = req.query;
 
-  try {
-    const findPlaceRes = await axios.post(
-      `https://places.googleapis.com/v1/places:searchText`,
-      {
-        textQuery: location,
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "X-Goog-Api-Key": process.env.GOOGLE_API_KEY,
-          "X-Goog-FieldMask": "places.id,places.photos",
-        },
-      },
-    );
-
-    const place = findPlaceRes.data.places?.[0];
-    const photoName = place?.photos?.[0]?.name;
-    if (!photoName) {
-      console.log(`No photo generated for ${location}`);
-      return res.json({ photoUrl: null });
-    }
-
-    const photoUrl = `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=800&key=${process.env.GOOGLE_API_KEY}`;
-
-    res.json({ photoUrl });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Failed to fetch photo" });
-  }
-});
 
 router.get("/:tripId", async (req: Request, res: Response) => {
   const { tripId } = req.params;
@@ -161,49 +130,6 @@ router.get("/:tripId", async (req: Request, res: Response) => {
   }
 });
 
-async function fetchPlaceDetails(placeId: string) {
-  const res = await axios.get(
-    `https://places.googleapis.com/v1/places/${placeId}`,
-    {
-      headers: {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": process.env.GOOGLE_API_KEY,
-        "X-Goog-FieldMask":
-          "id,displayName,internationalPhoneNumber,websiteUri,currentOpeningHours,photos,reviews,types,formattedAddress,editorialSummary,addressComponents,location,viewport",
-      },
-    },
-  );
-
-  const details = res.data;
-  if (!details) throw new Error("Failed to fetch place details");
-
-  return {
-    name: details.displayName?.text || "Unknown place",
-    phoneNumber: details.internationalPhoneNumber || "",
-    website: details.websiteUri,
-    openingHours: details.currentOpeningHours?.weekdayDescriptions || [],
-    photos: (details.photos || []).map(
-      (photo: Photo) =>
-        `https://places.googleapis.com/v1/${photo.name}/media?maxWidthPx=800&key=${process.env.GOOGLE_API_KEY}`,
-    ),
-    reviews: (details.reviews || []).map((review: Review) => ({
-      authorName: review.authorAttribution?.displayName || "Unknown",
-      rating: review.rating || 0,
-      text: review.text?.text || "",
-    })),
-    types: details.types || [],
-    formattedAddress: details.formattedAddress || "No address available",
-    briefDescription:
-      truncate(details.editorialSummary?.text) ||
-      `Located in ${details.addressComponents?.[2]?.longText || details.formattedAddress || "this area"}.`,
-    location: details.location || { latitude: 0, longitude: 0 },
-    viewport: details.viewport || {
-      low: { latitude: 0, longitude: 0 },
-      high: { latitude: 0, longitude: 0 },
-    },
-  };
-}
-
 router.post("/:tripId/places", async (req: Request, res: Response) => {
   const { tripId } = req.params;
   const { placeId } = req.body;
@@ -217,7 +143,7 @@ router.post("/:tripId/places", async (req: Request, res: Response) => {
   }
 
   try {
-    const placeData = await fetchPlaceDetails(placeId);
+    const placeData = await fetchPlaceDetails(placeId, true);
 
     const updatedTrip = await Trip.findByIdAndUpdate(
       tripId,
@@ -253,7 +179,7 @@ router.post("/:tripId/itinerary", async (req:Request, res:Response) => {
 
     const activityData = {
       date,
-      ...(placeData ?? await fetchPlaceDetails(placeId))
+      ...(placeData ?? await fetchPlaceDetails(placeId, true))
     }
 
     const existingItinerary = trip.itinerary.find(item => item.date == date);

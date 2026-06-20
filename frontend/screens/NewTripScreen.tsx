@@ -128,7 +128,7 @@ const NewTripScreen = () => {
       let background = tripBackground;
       try {
         const photoRes = await axios.get(
-          `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/trips/place-photo`,
+          `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/places/place-photo`,
           { params: { location: chosenLocation } },
         );
         if (photoRes.data.photoUrl) {

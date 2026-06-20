@@ -4,7 +4,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
 import React, { useCallback, useState } from "react";
@@ -30,15 +29,14 @@ import GooglePlacesTextInput, {
   Place,
 } from "react-native-google-places-textinput";
 import { GoogleSearchStyle } from "../common/GoogleSearchStyle";
-import { Photo } from "../types/Photo";
-import { Review } from "../types/Review";
 import axios, { AxiosError } from "axios";
 import { PlaceToVisit } from "../types/PlaceToVisit";
 import PlaceToVisitCard from "../components/PlaceToVisitCard";
 import { IoniconsGlyphs } from "../types/IoniconGlyphs";
-import { truncate } from "../common/String";
 import ItineraryView from "../components/ItineraryView";
-import { generateTripDates } from "../common/Date";
+import PlaceSelectionList from "../components/PlaceSelectionList";
+import { formatPlaceData } from "../common/PlaceData";
+import ItineraryPlaceList from "../components/ItineraryPlaceList";
 
 export type ModalMode = "place" | "expense" | "editExpense" | "ai";
 
@@ -95,6 +93,8 @@ const PlanTripScreen = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMode, setModalMode] = useState<ModalMode>("place");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [aiPlaces, setAiPlaces] = useState<PlaceToVisit[]>([]);
+  
   const [error, setError] = useState("");
   const { user: expoUser } = useUser();
   const { getToken } = useAuth();
@@ -131,31 +131,7 @@ const PlanTripScreen = () => {
       throw new Error("Could not retrieve place details!");
     }
 
-    const placeData = {
-      name: details.displayName?.text || "Undefined place",
-      phoneNumber: details.internationalPhoneNumber || "",
-      website: details.websiteUri,
-      openingHours: details.currentOpeningHours?.weekdayDescriptions || [],
-      photos: (details.photos || []).map(
-        (photo: Photo) =>
-          `${process.env.EXPO_PUBLIC_BACKEND_URL}?photoName=${encodeURIComponent(photo.name)}&maxWidthPx=800`,
-      ),
-      reviews: (details.reviews || []).map((review: Review) => ({
-        authorName: review.authorAttribution?.displayName || "Unknown",
-        rating: review.rating || 0,
-        text: review.text?.text || "",
-      })),
-      types: details.types || [],
-      formattedAddress: details.formattedAddress || "No address available",
-      briefDescription:
-        truncate(details.editorialSummary?.text) ||
-        `Located in ${details.addressComponents?.[2]?.longText || details.formattedAddress || "this area"}.`,
-      location: details.location || { latitude: 0, longitude: 0 },
-      viewport: details.viewport || {
-        low: { latitude: 0, longitude: 0 },
-        high: { latitude: 0, longitude: 0 },
-      },
-    };
+    const placeData = formatPlaceData(details);
 
     if (selectedDate) {
       await handleAddPlaceToItinerary(placeData, selectedDate, placeId);
@@ -380,6 +356,8 @@ const PlanTripScreen = () => {
           setSelectedDate={setSelectedDate}
           setModalMode={setModalMode}
           setModalVisible={setModalVisible}
+          setAiPlaces={setAiPlaces}
+          setError={setError}
         />
       )}
 
@@ -454,7 +432,7 @@ const PlanTripScreen = () => {
               </>
             ) : (
               modalMode === "place" &&
-              selectedTab === "Itinerary" && (
+              selectedTab === "Itinerary" ? (
                 <>
                   <Text className="text-lg font-semibold mt-2 mb-2">
                     {selectedDate
@@ -487,66 +465,26 @@ const PlanTripScreen = () => {
                     ]}
                     detailsProxyUrl={`${process.env.EXPO_PUBLIC_BACKEND_URL}/api/places/details`}
                   />
-                  <Text className="text-sm font-semibold mt-2 mb-1">
-                    Select Date
-                  </Text>
-                  <View className="flex-row items-center gap-2">
-                    {generateTripDates(trip).map((date, index) => (
-                      <TouchableOpacity
-                        key={index}
-                        onPress={() => setSelectedDate(date.value)}
-                        className={`px-3 py-1.5 mr-2 rounded-full border ${selectedDate === date.value ? "bg-blue-500 border-blue-500" : "bg-white border-gray-300"}`}
-                      >
-                        <Text
-                          className={`text-xs font-medium ${selectedDate === date.value ? "text-white" : "text-gray-700"}`}
-                        >
-                          {date.label}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
+                  <PlaceSelectionList trip={trip} selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
 
-                  <View className="flex-1 mt-2">
-                    <Text className="text-sm font-semibold mb-1">
-                      Previously Added Places
-                    </Text>
-                    <ScrollView className="flex-1">
-                      {trip?.placesToVisit.map(
-                        (place: PlaceToVisit, index: number) => (
-                          <TouchableOpacity
-                            key={index}
-                            onPress={() => {
-                              if (selectedDate) {
-                                console.log("add");
-                                handleAddPlaceToItinerary(place, selectedDate);
-                              } else {
-                                setError(
-                                  "Please select a date to add this place",
-                                );
-                              }
-                            }}
-                            className="flex-row items-center p-2 border-b border-gray-200"
-                          >
-                            <Image
-                              className="w-12 h-12 rounded-md mr-2"
-                              source={{ uri: place?.photos[0] }}
-                            />
-                            <View>
-                              <Text className="text-sm font-medium">
-                                {place?.name}
-                              </Text>
-                              <Text className="text-xs text-gray-500">
-                                {place?.formattedAddress}
-                              </Text>
-                            </View>
-                          </TouchableOpacity>
-                        ),
-                      )}
-                    </ScrollView>
-                  </View>
+                  <ItineraryPlaceList title="Previously Added Places" places={trip.placesToVisit} selectedDate={selectedDate} handleAddPlaceToItinerary={handleAddPlaceToItinerary} setError={setError} />
                 </>
               )
-            )}
+            : modalMode === "ai" && (
+              <>
+                <Text>
+                  {selectedDate ? `Add AI-Suggested Place to ${dayjs(selectedDate).format("ddd D/M")}` : "Select a date for AI suggested places"}
+                </Text>
+
+                <PlaceSelectionList trip={trip} selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
+
+                {
+                  aiPlaces.length > 0 && (
+                    <ItineraryPlaceList title="AI Suggested Places" places={aiPlaces} selectedDate={selectedDate} handleAddPlaceToItinerary={handleAddPlaceToItinerary} setError={setError} />
+                  )
+                }
+              </>
+            ))}
           </View>
         )}
       </Modal>
