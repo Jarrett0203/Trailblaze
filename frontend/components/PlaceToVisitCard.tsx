@@ -4,7 +4,7 @@ import { PlaceToVisit } from "../types/PlaceToVisit";
 import { Ionicons } from "@expo/vector-icons";
 import dayjs from "dayjs";
 import PlaceToVisitField from "./PlaceToVisitField";
-import { getCategories, PLACE_TYPE_CATEGORIES, PlaceTypeCategory } from "../common/AllowedCategories";
+import { getCategories, PLACE_TYPE_CATEGORIES, PlaceTypeCategory } from "../common/AllowedPlaceCategories";
 
 type PlaceToVisitCardProps = {
   place: PlaceToVisit;

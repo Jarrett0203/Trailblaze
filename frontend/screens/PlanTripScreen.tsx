@@ -37,26 +37,11 @@ import ItineraryView from "../components/ItineraryView";
 import PlaceSelectionList from "../components/PlaceSelectionList";
 import { formatPlaceData } from "../common/PlaceData";
 import ItineraryPlaceList from "../components/ItineraryPlaceList";
+import ExpenseView from "../components/ExpenseView";
+import { Expense, ExpenseForm } from "../types/Expense";
+import AddExpense from "../components/AddExpense";
 
 export type ModalMode = "place" | "expense" | "editExpense" | "ai";
-
-const categories = [
-  "Flight",
-  "Lodging",
-  "Shopping",
-  "Activities",
-  "Sightseeing",
-  "Drinks",
-  "Food",
-  "Transportation",
-  "Entertainment",
-  "Miscelleaneous",
-];
-
-const splitOptions = [
-  { label: "Don't split", value: "Don't Split" },
-  { label: "Everyone", value: "Everyone" },
-];
 
 const tripTabs = ["Overview", "Itinerary", "Explore", "$"];
 
@@ -87,6 +72,8 @@ const PlanTripScreen = () => {
     useRoute<
       RouteProp<HomeStackParamsList | ProfileStackParamsList, "PlanTrip">
     >();
+  const { user: expoUser } = useUser();
+  const username = expoUser?.fullName || "User";
   const { trip: initialTrip } = route.params;
   const [trip, setTrip] = useState(initialTrip);
   const [selectedTab, setSelectedTab] = useState("Overview");
@@ -94,9 +81,17 @@ const PlanTripScreen = () => {
   const [modalMode, setModalMode] = useState<ModalMode>("place");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [aiPlaces, setAiPlaces] = useState<PlaceToVisit[]>([]);
-  
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [expenseForm, setExpenseForm] = useState<ExpenseForm>({
+    description: "",
+    category: "",
+    amount: "",
+    paidBy: username,
+    splitOption: "Don't Split",
+  });
+
   const [error, setError] = useState("");
-  const { user: expoUser } = useUser();
   const { getToken } = useAuth();
 
   const fetchTrips = useCallback(async () => {
@@ -361,6 +356,17 @@ const PlanTripScreen = () => {
         />
       )}
 
+      {selectedTab === "$" && (
+        <ExpenseView
+          expenses={expenses}
+          setExpenses={setExpenses}
+          setEditingExpense={setEditingExpense}
+          setExpenseForm={setExpenseForm}
+          setModalMode={setModalMode}
+          setModalVisible={setModalVisible}
+        />
+      )}
+
       <View className="absolute right-4 bottom-20 space-y-3 items-end">
         <Pressable
           onPress={() =>
@@ -394,7 +400,7 @@ const PlanTripScreen = () => {
         }}
         style={{ justifyContent: "flex-end", margin: 0 }}
       >
-        {(modalMode === "place" || modalMode === "ai") && (
+        {
           <View className="bg-white p-4 rounded-t-2xl h-[60%]">
             {modalMode === "place" && selectedTab !== "Itinerary" ? (
               <>
@@ -430,63 +436,99 @@ const PlanTripScreen = () => {
                   detailsProxyUrl={`${process.env.EXPO_PUBLIC_BACKEND_URL}/api/places/details`}
                 />
               </>
-            ) : (
-              modalMode === "place" &&
-              selectedTab === "Itinerary" ? (
-                <>
-                  <Text className="text-lg font-semibold mt-2 mb-2">
-                    {selectedDate
-                      ? `Add place to ${dayjs(selectedDate).format("ddd D/M")}`
-                      : "Search for a place"}
-                  </Text>
-                  <GooglePlacesTextInput
-                    apiKey=""
-                    proxyUrl={`${process.env.EXPO_PUBLIC_BACKEND_URL}/api/places/autocomplete`}
-                    placeHolderText="Search for a place"
-                    languageCode="en"
-                    onPlaceSelect={handlePlaceSelect}
-                    onError={handlePlaceError}
-                    style={GoogleSearchStyle}
-                    fetchDetails={true}
-                    detailsFields={[
-                      "id",
-                      "displayName",
-                      "internationalPhoneNumber",
-                      "websiteUri",
-                      "currentOpeningHours",
-                      "photos",
-                      "reviews",
-                      "types",
-                      "formattedAddress",
-                      "editorialSummary",
-                      "addressComponents",
-                      "location",
-                      "viewport",
-                    ]}
-                    detailsProxyUrl={`${process.env.EXPO_PUBLIC_BACKEND_URL}/api/places/details`}
-                  />
-                  <PlaceSelectionList trip={trip} selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
+            ) : modalMode === "place" && selectedTab === "Itinerary" ? (
+              <>
+                <Text className="text-lg font-semibold mt-2 mb-2">
+                  {selectedDate
+                    ? `Add place to ${dayjs(selectedDate).format("ddd D/M")}`
+                    : "Search for a place"}
+                </Text>
+                <GooglePlacesTextInput
+                  apiKey=""
+                  proxyUrl={`${process.env.EXPO_PUBLIC_BACKEND_URL}/api/places/autocomplete`}
+                  placeHolderText="Search for a place"
+                  languageCode="en"
+                  onPlaceSelect={handlePlaceSelect}
+                  onError={handlePlaceError}
+                  style={GoogleSearchStyle}
+                  fetchDetails={true}
+                  detailsFields={[
+                    "id",
+                    "displayName",
+                    "internationalPhoneNumber",
+                    "websiteUri",
+                    "currentOpeningHours",
+                    "photos",
+                    "reviews",
+                    "types",
+                    "formattedAddress",
+                    "editorialSummary",
+                    "addressComponents",
+                    "location",
+                    "viewport",
+                  ]}
+                  detailsProxyUrl={`${process.env.EXPO_PUBLIC_BACKEND_URL}/api/places/details`}
+                />
+                <PlaceSelectionList
+                  trip={trip}
+                  selectedDate={selectedDate}
+                  setSelectedDate={setSelectedDate}
+                />
 
-                  <ItineraryPlaceList title="Previously Added Places" places={trip.placesToVisit} selectedDate={selectedDate} handleAddPlaceToItinerary={handleAddPlaceToItinerary} setError={setError} />
-                </>
-              )
-            : modalMode === "ai" && (
+                <ItineraryPlaceList
+                  title="Previously Added Places"
+                  places={trip.placesToVisit}
+                  selectedDate={selectedDate}
+                  handleAddPlaceToItinerary={handleAddPlaceToItinerary}
+                  setError={setError}
+                />
+              </>
+            ) : modalMode === "ai" ? (
               <>
                 <Text>
-                  {selectedDate ? `Add AI-Suggested Place to ${dayjs(selectedDate).format("ddd D/M")}` : "Select a date for AI suggested places"}
+                  {selectedDate
+                    ? `Add AI-Suggested Place to ${dayjs(selectedDate).format("ddd D/M")}`
+                    : "Select a date for AI suggested places"}
                 </Text>
 
-                <PlaceSelectionList trip={trip} selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
+                <PlaceSelectionList
+                  trip={trip}
+                  selectedDate={selectedDate}
+                  setSelectedDate={setSelectedDate}
+                />
 
-                {
-                  aiPlaces.length > 0 && (
-                    <ItineraryPlaceList title="AI Suggested Places" places={aiPlaces} selectedDate={selectedDate} handleAddPlaceToItinerary={handleAddPlaceToItinerary} setError={setError} />
-                  )
-                }
+                {aiPlaces.length > 0 && (
+                  <ItineraryPlaceList
+                    title="AI Suggested Places"
+                    places={aiPlaces}
+                    selectedDate={selectedDate}
+                    handleAddPlaceToItinerary={handleAddPlaceToItinerary}
+                    setError={setError}
+                  />
+                )}
               </>
-            ))}
+            ) : (
+              <>
+                <Text className="text-lg font-semibold mb-4">
+                  {modalMode === "editExpense"
+                    ? "Edit expense"
+                    : "Add new expense"}
+                </Text>
+
+                <AddExpense
+                  modalMode={modalMode}
+                  expenseForm={expenseForm}
+                  editingExpense={editingExpense}
+                  setModalMode={setModalMode}
+                  setModalVisible={setModalVisible}
+                  setExpenses={setExpenses}
+                  setExpenseForm={setExpenseForm}
+                  setError={setError}
+                />
+              </>
+            )}
           </View>
-        )}
+        }
       </Modal>
     </SafeAreaView>
   );

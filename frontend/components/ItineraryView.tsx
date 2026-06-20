@@ -203,10 +203,10 @@ const ItineraryView = (props: ItineraryViewProps) => {
 
             <View className="flex-row items-center gap-2 mb-2">
               <Text className="text-blue-600 text-sm font-semibold">
-                + Auto-fill day
+                ✈ Auto-fill day
               </Text>
               <Text className="text-blue-600 text-sm font-semibold">
-                Optimize route
+                🚩 Optimize route
               </Text>
               <Text className="text-xs bg-orange-400 text-white px-1.5 py-0.5 rounded">
                 PRO
