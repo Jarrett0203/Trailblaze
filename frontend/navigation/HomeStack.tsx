@@ -7,7 +7,7 @@ import { SharedScreenParams } from "../types/Navigation";
 import { PlanTripStack } from "./PlanTripStack";
 
 export type HomeStackParamsList = {
-  HomeMain: undefined;
+  Home: undefined;
   NewTrip: undefined;
 } & SharedScreenParams;
 
@@ -22,7 +22,7 @@ const HomeStack = () => {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="HomeMain" component={HomeScreen} />
+      <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="NewTrip" component={NewTripScreen} />
       <Stack.Screen name="PlanTrip" component={PlanTripStack} />
     </Stack.Navigator>

@@ -39,7 +39,7 @@ const HomeScreen = () => {
             resizeMode='cover' 
           />
 
-          <View className="absolute inset-0 flex items-center justify-center">
+          <View className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
             <Text className="text-white text-4xl font-bold text-center px-6">Plan your next adventure</Text>
             <Pressable className="bg-orange-500 px-6 py-2 rounded-full mt-4" onPress={() => navigation.navigate("NewTrip")}>
               <Text className='text-white font-semibold text-base'>Create new trip plan</Text>

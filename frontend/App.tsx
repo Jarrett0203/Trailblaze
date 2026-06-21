@@ -37,7 +37,10 @@ export default function App() {
 
   return (
     <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-      <NavigationContainer>
+      <NavigationContainer documentTitle={{
+        enabled: true,
+        formatter: (options, route) => options?.title ?? route?.name ?? "Home"
+      }}>
         <RootNavigator />
       </NavigationContainer>
     </ClerkProvider>
