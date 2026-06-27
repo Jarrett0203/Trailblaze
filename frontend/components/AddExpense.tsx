@@ -6,7 +6,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import React, { useState, Dispatch, SetStateAction } from "react";
+import React, { Dispatch, SetStateAction } from "react";
 import { Expense, ExpenseForm, SplitOption } from "../types/Expense";
 import { useUser } from "@clerk/expo";
 import { categories, splitOptions } from "../common/Expense";
@@ -26,7 +26,16 @@ type AddExpenseProps = {
 };
 
 const AddExpense = (props: AddExpenseProps) => {
-  const { modalMode, expenseForm, editingExpense, setModalMode, setModalVisible, setExpenses, setExpenseForm, setError } = props;
+  const {
+    modalMode,
+    expenseForm,
+    editingExpense,
+    setModalMode,
+    setModalVisible,
+    setExpenses,
+    setExpenseForm,
+    setError,
+  } = props;
   const { user: expoUser } = useUser();
   const username = expoUser?.fullName || "User";
 
@@ -63,17 +72,24 @@ const AddExpense = (props: AddExpenseProps) => {
     if (
       !expenseForm.description ||
       !expenseForm.category ||
-      !expenseForm.amount || !editingExpense
+      !expenseForm.amount ||
+      !editingExpense
     ) {
       setError("Please fill in all expense fields");
       return;
     }
 
-    setExpenses((prev) => prev.map((expense) => expense.id === editingExpense.id ? {
-      ...expense,
-      ...expenseForm,
-      price: parseFloat(expenseForm.amount)
-    }: expense));
+    setExpenses((prev) =>
+      prev.map((expense) =>
+        expense.id === editingExpense.id
+          ? {
+              ...expense,
+              ...expenseForm,
+              price: parseFloat(expenseForm.amount),
+            }
+          : expense,
+      ),
+    );
 
     setExpenseForm({
       description: "",
@@ -82,7 +98,7 @@ const AddExpense = (props: AddExpenseProps) => {
       paidBy: username,
       splitOption: "Don't Split",
     });
-  }
+  };
 
   return (
     <ScrollView>
@@ -118,9 +134,10 @@ const AddExpense = (props: AddExpenseProps) => {
         subtitle="Amount"
         value={expenseForm.amount}
         onChangeText={(text) =>
-          setExpenseForm({ ...expenseForm, amount: text })
+          setExpenseForm({ ...expenseForm, amount: text.replace(/[^0-9.]/g, "").replace(/^(\d+\.?\d{0,2}).*/g, "$1") })
         }
         placeholder="Enter amount"
+        numeric
       />
       <ExpenseTextInput
         subtitle="Paid By"
@@ -157,7 +174,7 @@ const AddExpense = (props: AddExpenseProps) => {
 
       <Pressable
         onPress={() =>
-          modalMode === "editExpense" ? handleEditExpense : handleAddExpense
+          modalMode === "editExpense" ? handleEditExpense() : handleAddExpense()
         }
         className="bg-blue-500 p-3 rounded-lg items-center"
       >

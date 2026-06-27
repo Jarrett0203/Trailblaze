@@ -6,10 +6,11 @@ type ExpenseTextInputProps = {
   value: string,
   onChangeText: (text: string) => void,
   placeholder: string,
+  numeric?: boolean,
 };
 
 const ExpenseTextInput = (props: ExpenseTextInputProps) => {
-  const {subtitle, value, onChangeText, placeholder} = props;
+  const {subtitle, value, onChangeText, placeholder, numeric} = props;
   
   return (
     <>
@@ -18,6 +19,7 @@ const ExpenseTextInput = (props: ExpenseTextInputProps) => {
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
+        keyboardType={numeric ? "decimal-pad": "default"}
         className="bg-gray-100 p-3 rounded-lg mb-4"
       />
     </>
