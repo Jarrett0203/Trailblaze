@@ -142,6 +142,12 @@ const ProfileScreen = () => {
           </Pressable>
         </View>
 
+        <View>
+          <Text>
+            {error}
+          </Text>
+        </View>
+
         {formattedTrips?.length === 0 && !error && (
           <View className="px-4 mt-4">
             <Text className="text-gray-500 text-sm">

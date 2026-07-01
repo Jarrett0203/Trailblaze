@@ -1,28 +1,33 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import React, { Dispatch, SetStateAction } from "react";
+import React from "react";
 import dayjs from "dayjs";
 import { Expense, ExpenseForm } from "../types/Expense";
 import { ModalMode } from "../screens/PlanTripScreen";
 import { Ionicons } from "@expo/vector-icons";
+import { useAuth } from "@clerk/expo";
+import axios from "axios";
 
 type ExpenseViewProps = {
   expenses: Expense[];
-  setExpenses: Dispatch<SetStateAction<Expense[]>>;
-  setEditingExpense: (expense: Expense) => void;
-  setExpenseForm: (expenseForm: ExpenseForm) => void;
+  tripId: string;
+  onMutate: () => Promise<void>;
   setModalMode: (modalMode: ModalMode) => void;
   setModalVisible: (modalVisible: boolean) => void;
+  setEditingExpense: (expense: Expense) => void;
+  setExpenseForm: (expenseForm: ExpenseForm) => void;
 };
 
 const ExpenseView = (props: ExpenseViewProps) => {
   const {
     expenses,
-    setExpenses,
-    setEditingExpense,
-    setExpenseForm,
+    tripId,
+    onMutate,
     setModalMode,
     setModalVisible,
+    setEditingExpense,
+    setExpenseForm,
   } = props;
+  const { getToken } = useAuth();
 
   const total = expenses.reduce(
     (sum, expense) => sum + Number(expense.price ?? expense.amount ?? 0),
@@ -43,10 +48,18 @@ const ExpenseView = (props: ExpenseViewProps) => {
     setModalVisible(true);
   }
 
-  function handleDeleteExpense(expenseId: string) {
-    setExpenses((prev: Expense[]) =>
-      prev.filter((expense) => expense.id !== expenseId),
-    );
+  async function handleDeleteExpense(expenseId: string) {
+    console.log(expenseId);
+    try {
+      const token = await getToken();
+      await axios.delete(
+        `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/trips/${tripId}/expenses/${expenseId}`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      await onMutate();
+    } catch (error) {
+      console.error("Failed to delete expense");
+    }
   }
 
   return (
@@ -79,15 +92,27 @@ const ExpenseView = (props: ExpenseViewProps) => {
           <View key={index} className="mb-4 bg-gray-50 rounded-lg p-3 shadow">
             <View className="flex-row justify-between">
               <View>
-                <Text className="text-sm font-semibold">{expense.description}</Text>
-                <Text className="text-xs text-gray-500">{expense.category}</Text>
-                <Text className="text-xs text-gray-500">Paid By: {expense.paidBy}</Text>
-                <Text className="text-xs text-gray-500">Split: {expense.splitOption}</Text>
+                <Text className="text-sm font-semibold">
+                  {expense.description}
+                </Text>
+                <Text className="text-xs text-gray-500">
+                  {expense.category}
+                </Text>
+                <Text className="text-xs text-gray-500">
+                  Paid By: {expense.paidBy}
+                </Text>
+                <Text className="text-xs text-gray-500">
+                  Split: {expense.splitOption}
+                </Text>
               </View>
 
               <View className="items-end">
-                <Text className="text-sm font-semibold">${amount.toFixed(2)}</Text>
-                <Text className="text-xs text-gray-400">{dayjs(expense.date).format("MMM D, YYYY")}</Text>
+                <Text className="text-sm font-semibold">
+                  ${amount.toFixed(2)}
+                </Text>
+                <Text className="text-xs text-gray-400">
+                  {dayjs(expense.date).format("MMM D, YYYY")}
+                </Text>
               </View>
             </View>
 
@@ -99,7 +124,7 @@ const ExpenseView = (props: ExpenseViewProps) => {
                 <Ionicons name="pencil" size={16} color={"#2563eb"} />
               </Pressable>
               <Pressable
-                onPress={() => handleDeleteExpense(expense.id)}
+                onPress={() => handleDeleteExpense(expense._id)}
                 className="bg-red-100 p-2 rounded"
               >
                 <Ionicons name="trash" size={16} color={"#dc2626"} />

@@ -13,7 +13,7 @@ export const expenseSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
-  splitBy: {
+  splitOption: {
     type: String,
     required: true
   },

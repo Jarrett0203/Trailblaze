@@ -81,7 +81,6 @@ const PlanTripScreen = () => {
   const [modalMode, setModalMode] = useState<ModalMode>("place");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [aiPlaces, setAiPlaces] = useState<PlaceToVisit[]>([]);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [expenseForm, setExpenseForm] = useState<ExpenseForm>({
     description: "",
@@ -358,8 +357,9 @@ const PlanTripScreen = () => {
 
       {selectedTab === "$" && (
         <ExpenseView
-          expenses={expenses}
-          setExpenses={setExpenses}
+          expenses={trip.expense ?? []}
+          tripId={trip._id}
+          onMutate={fetchTrips}
           setEditingExpense={setEditingExpense}
           setExpenseForm={setExpenseForm}
           setModalMode={setModalMode}
@@ -519,9 +519,10 @@ const PlanTripScreen = () => {
                   modalMode={modalMode}
                   expenseForm={expenseForm}
                   editingExpense={editingExpense}
+                  tripId={trip._id}
+                  onMutate={fetchTrips}
                   setModalMode={setModalMode}
                   setModalVisible={setModalVisible}
-                  setExpenses={setExpenses}
                   setExpenseForm={setExpenseForm}
                   setError={setError}
                 />

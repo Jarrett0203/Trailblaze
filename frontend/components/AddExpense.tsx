@@ -3,24 +3,24 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
-  View,
 } from "react-native";
-import React, { Dispatch, SetStateAction } from "react";
+import React from "react";
 import { Expense, ExpenseForm, SplitOption } from "../types/Expense";
-import { useUser } from "@clerk/expo";
+import { useAuth, useUser } from "@clerk/expo";
 import { categories, splitOptions } from "../common/Expense";
 import ExpenseTextInput from "./ExpenseTextInput";
 import { ModalMode } from "../screens/PlanTripScreen";
 import dayjs from "dayjs";
+import axios from "axios";
 
 type AddExpenseProps = {
   modalMode: ModalMode;
   expenseForm: ExpenseForm;
   editingExpense: Expense | null;
+  tripId: string;
+  onMutate: () => Promise<void>;
   setModalMode: (modalMode: ModalMode) => void;
   setModalVisible: (modalVisible: boolean) => void;
-  setExpenses: Dispatch<SetStateAction<Expense[]>>;
   setExpenseForm: (expenseForm: ExpenseForm) => void;
   setError: (error: string) => void;
 };
@@ -30,16 +30,28 @@ const AddExpense = (props: AddExpenseProps) => {
     modalMode,
     expenseForm,
     editingExpense,
+    tripId,
+    onMutate,
     setModalMode,
     setModalVisible,
-    setExpenses,
     setExpenseForm,
     setError,
   } = props;
   const { user: expoUser } = useUser();
   const username = expoUser?.fullName || "User";
+  const { getToken } = useAuth();
 
-  const handleAddExpense = () => {
+  const resetForm = () => {
+    setExpenseForm({
+      description: "",
+      category: "",
+      amount: "",
+      paidBy: username,
+      splitOption: "Don't Split",
+    });
+  };
+
+  const handleAddExpense = async () => {
     if (
       !expenseForm.description ||
       !expenseForm.category ||
@@ -50,25 +62,32 @@ const AddExpense = (props: AddExpenseProps) => {
     }
 
     const newExpense = {
-      id: Date.now().toString(),
       ...expenseForm,
+      splitBy: expenseForm.splitOption,
       price: parseFloat(expenseForm.amount),
       date: dayjs().format("YYYY-MM-DD"),
     };
 
-    setExpenses((prev) => [...prev, newExpense]);
-    setExpenseForm({
-      description: "",
-      category: "",
-      amount: "",
-      paidBy: username,
-      splitOption: "Don't Split",
-    });
-    setModalVisible(false);
-    setModalMode("place");
+    try {
+      const token = await getToken();
+      await axios.post(
+        `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/trips/${tripId}/expenses`,
+        newExpense,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      await onMutate();
+      resetForm();
+      setModalVisible(false);
+      setModalMode("place");
+    } catch (error) {
+      setError("Failed to save expense");
+    }
   };
 
-  const handleEditExpense = () => {
+  const handleEditExpense = async () => {
     if (
       !expenseForm.description ||
       !expenseForm.category ||
@@ -79,26 +98,32 @@ const AddExpense = (props: AddExpenseProps) => {
       return;
     }
 
-    setExpenses((prev) =>
-      prev.map((expense) =>
-        expense.id === editingExpense.id
-          ? {
-              ...expense,
-              ...expenseForm,
-              price: parseFloat(expenseForm.amount),
-            }
-          : expense,
-      ),
-    );
+    const newExpense = {
+      ...expenseForm,
+      description: expenseForm.description,
+      category: expenseForm.category,
+      price: parseFloat(expenseForm.amount),
+      splitBy: expenseForm.splitOption,
+      paidBy: expenseForm.paidBy,
+      date: dayjs().format("YYYY-MM-DD"),
+    };
 
-    setExpenseForm({
-      description: "",
-      category: "",
-      amount: "",
-      paidBy: username,
-      splitOption: "Don't Split",
-    });
-  };
+    console.log(newExpense);
+
+    try {
+      const token = await getToken();
+      await axios.patch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/api/trips/${tripId}/expenses/${editingExpense._id}`, newExpense, {
+        headers: { Authorization: `Bearer ${token}`}
+      })
+
+      await onMutate();
+      resetForm();
+      setModalVisible(false);
+      setModalMode("place");
+    } catch (error) {
+      setError("Failed to save expense");
+    }
+  }
 
   return (
     <ScrollView>
@@ -134,7 +159,12 @@ const AddExpense = (props: AddExpenseProps) => {
         subtitle="Amount"
         value={expenseForm.amount}
         onChangeText={(text) =>
-          setExpenseForm({ ...expenseForm, amount: text.replace(/[^0-9.]/g, "").replace(/^(\d+\.?\d{0,2}).*/g, "$1") })
+          setExpenseForm({
+            ...expenseForm,
+            amount: text
+              .replace(/[^0-9.]/g, "")
+              .replace(/^(\d+\.?\d{0,2}).*/g, "$1"),
+          })
         }
         placeholder="Enter amount"
         numeric

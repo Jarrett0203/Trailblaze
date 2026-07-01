@@ -1,7 +1,7 @@
 export type SplitOption = "Don't Split" | "Everyone";
 
 export type Expense = ExpenseForm & {
-  id: string,
+  _id: string,
   price: number,
   date: string
 }

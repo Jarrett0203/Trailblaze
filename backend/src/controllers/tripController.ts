@@ -67,6 +67,30 @@ export const createTrip = async (req: Request, res: Response) => {
   }
 };
 
+export const getTrips = async (req: Request, res: Response) => {
+  try {
+    const clerkUserId = req.query.clerkUserId?.toString();
+    const email = req.query.email?.toString();
+
+    if (!clerkUserId) return res.status(401).json({ error: "User id is required" });
+
+    let user = await User.findOne({ clerkUserId });
+    if (!user) {
+      if (!email) return res.status(400).json({ error: "User email is required" });
+      user = new User({ clerkUserId, email, name: "" });
+      await user.save();
+    }
+
+    const trips = await Trip.find({
+      $or: [{ host: user._id }, { travelers: user._id }],
+    }).populate("host travelers");
+
+    res.status(200).json({ trips });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch trips" });
+  }
+};
+
 export const getTrip = async (req: Request, res: Response) => {
   const { tripId } = req.params;
   const clerkUserId = req.query.clerkUserId?.toString();
@@ -163,14 +187,89 @@ export const updateItinerary = async (req: Request, res: Response) => {
       );
     }
 
-    res
-      .status(200)
-      .json({
-        message: "Activity added to itinerary successfully",
-        trip: updatedTrip,
-      });
+    res.status(200).json({
+      message: "Activity added to itinerary successfully",
+      trip: updatedTrip,
+    });
   } catch (error) {
     console.error("Error adding itinerary", error);
     res.status(500).json({ error: "Failed to add activity to itinerary!" });
+  }
+};
+
+export const addExpense = async (req: Request, res: Response) => {
+  try {
+    const { tripId } = req.params;
+    const { description, category, price, splitOption, paidBy, date } = req.body;
+
+    const trip = await Trip.findById(tripId);
+    if (!trip) {
+      return res.status(404).json({ message: "Trip not found" });
+    }
+
+    trip.expense.push({ description, category, price, splitOption, paidBy, date });
+    await trip.save();
+
+    return res
+      .status(201)
+      .json({ message: "Expense added", expense: trip.expense });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error });
+  }
+};
+
+export const editExpense = async (req: Request, res: Response) => {
+  try {
+    const { tripId, expenseId } = req.params;
+    const { description, category, price, splitOption, paidBy } = req.body;
+
+    const trip = await Trip.findOneAndUpdate(
+      {
+        _id: tripId,
+        "expense._id": expenseId,
+      },
+      {
+        $set: {
+          "expense.$.description": description,
+          "expense.$.category": category,
+          "expense.$.price": price,
+          "expense.$.splitOption": splitOption,
+          "expense.$.paidBy": paidBy,
+        },
+      },
+      { new: true },
+    );
+
+    if (!trip) {
+      return res.status(404).json({ error: "Trip or expense not found" });
+    }
+
+    res
+      .status(200)
+      .json({ message: "Expense updated", expenses: trip.expense });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update expense" });
+  }
+};
+
+export const deleteExpense = async (req: Request, res: Response) => {
+  try {
+    const { tripId, expenseId } = req.params;
+
+    const trip = await Trip.findByIdAndUpdate(
+      tripId,
+      {
+        $pull: { expense: { _id: expenseId } },
+      },
+      { new: true },
+    );
+
+    if (!trip) {
+      return res.status(404).json({ error: "Trip not found" });
+    }
+
+    res.status(200).json({ message: "Expense deleted", expense: trip.expense });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to delete expense" });
   }
 };
