@@ -40,6 +40,7 @@ import ItineraryPlaceList from "../components/ItineraryPlaceList";
 import ExpenseView from "../components/ExpenseView";
 import { Expense, ExpenseForm } from "../types/Expense";
 import AddExpense from "../components/AddExpense";
+import FabMenu from "../components/FabMenu";
 
 export type ModalMode = "place" | "expense" | "editExpense" | "ai";
 
@@ -367,29 +368,7 @@ const PlanTripScreen = () => {
         />
       )}
 
-      <View className="absolute right-4 bottom-20 space-y-3 items-end">
-        <Pressable
-          onPress={() =>
-            navigation.navigate("AIChat", { tripName: trip?.tripName })
-          }
-          className="w-12 h-12 rounded-full bg-gradient-to-tr from-pink-400 to bg-purple-600 items-center justify-center shadow"
-        >
-          <MaterialIcons name="auto-awesome" size={24} color={"#fff"} />
-        </Pressable>
-        <Pressable
-          onPress={() =>
-            navigation.navigate("MapScreen", {
-              places: trip.placesToVisit || [],
-            })
-          }
-          className="w-12 h-12 rounded-full bg-gradient-to-tr bg-black items-center justify-center shadow mt-2"
-        >
-          <Ionicons name="map" size={24} color={"#fff"} />
-        </Pressable>
-        <Pressable className="w-12 h-12 rounded-full bg-gradient-to-tr bg-black items-center justify-center shadow mt-2">
-          <Ionicons name="add" size={24} color={"#fff"} />
-        </Pressable>
-      </View>
+      <FabMenu trip={trip} navigation={navigation} />
 
       <Modal
         isVisible={modalVisible}
